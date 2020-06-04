@@ -15,8 +15,7 @@ WORKDIR /app
 ADD . /app
 RUN yarn install --frozen-lockfile --non-interactive 
 #--silent
-
-CMD ["yarn", "build"]
+RUN yarn build 
 
 # then create a simple nginx container to serve the compiled app
 FROM nginx:stable-alpine
