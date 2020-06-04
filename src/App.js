@@ -3,10 +3,11 @@ import {
   BrowserRouter as Router,
   Switch,
   Route,
+  Redirect,
   Link,
   NavLink,
 } from "react-router-dom";
-import { Segment, Dimmer, Loader, Image, Menu, Modal, Input } from "semantic-ui-react";
+import { Segment, Dimmer, Loader, Image, Menu, Modal, Input, Icon } from "semantic-ui-react";
 import styled, { css } from "styled-components";
 import wikibaseSDK from "wikibase-sdk";
 import makeWikibaseApiActions from "actions/wikibase-api";
@@ -130,10 +131,10 @@ function App() {
           <AppTitle>Flora Commons</AppTitle>
           <HeaderNav direction="row">
             <NavItem to="/" exact>
-              Home
+              <Icon name="home" />Home
             </NavItem>
-            <NavItem to="/structure-character-search" >
-              Structure Character Search
+            <NavItem to="/morphology-facets" >
+              <Icon name="search" />Morphology Facets
             </NavItem>
           </HeaderNav>
           <AppSearch>
@@ -152,7 +153,8 @@ function App() {
               <Route exact path="/">
                 <Home actions={actions} />
               </Route>
-              <Route path="/structure-character-search" children={() => (
+              <Route path="/structure-character-search"><Redirect to="/morphology-facets" /></Route>
+              <Route path="/morphology-facets" children={() => (
                 <StructureCharacterSearch actions={actions} />
               )}
               />
