@@ -20,4 +20,4 @@ RUN yarn build
 # then create a simple nginx container to serve the compiled app
 FROM nginx:stable-alpine
 COPY --from=builder /app/build /usr/share/nginx/html
-COPY ./docker/nginx/templates /etc/nginx/templates
+COPY ./docker/nginx/default.conf /etc/nginx/conf.d/default.conf
