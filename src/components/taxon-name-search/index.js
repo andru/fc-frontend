@@ -33,7 +33,8 @@ export default function TaxonNameSearch ({actions}) {
     console.log('Search res', data);
     setResults(data.map(result => ({
       id: result.taxon.value,
-      title: result.taxon.name
+      title: result.taxon.name,
+      description: result.taxon.value,
     })));
     setIsFetching(false);
   }
@@ -41,6 +42,8 @@ export default function TaxonNameSearch ({actions}) {
 
   const handleResultSelect = (e, {result}) => {
     // debouncedSearchChangeHandler.cancel();
+    setSearchValue('');
+    setResults([]);
     history.push(`/taxon/${result.id}`)
   }
   
@@ -54,6 +57,7 @@ export default function TaxonNameSearch ({actions}) {
       value={searchValue}
       selectFirstResult={true}
       showNoResults={!isFetching && !results.length}
+      placeholder="Search by taxon name"
     />
   )
 }
