@@ -43,7 +43,7 @@ function Home({actions}) {
       <h4>Usable Features</h4>
       <ul>
         <li><Link to="/morphology-facets">Morphology Faceted Search</Link> is partially implemented, using top-level morphology structures and characters</li>
-        <li>Seach taxa by name (search box in header)</li>
+        <li>Search taxa by name (search box in header)</li>
       </ul>
       <h4>Not Yet Implemented</h4>
       <ul>
