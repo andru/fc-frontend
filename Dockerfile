@@ -13,7 +13,8 @@ ENV NGINX_HOST=localhost
 
 WORKDIR /app
 ADD . /app
-RUN yarn install --frozen-lockfile --non-interactive --silent
+RUN yarn install --frozen-lockfile --non-interactive 
+#--silent
 
 CMD ["yarn", "build"]
 
