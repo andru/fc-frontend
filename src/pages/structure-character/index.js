@@ -277,7 +277,7 @@ function StructureCharacterSearch({actions}) {
                   }
                   <Card.Content>
                     <Card.Header>{taxon.label}</Card.Header>
-                    <Card.Meta>{parentTaxon.label}</Card.Meta>
+                    {parentTaxon && <Card.Meta>{parentTaxon.label}</Card.Meta>}
                     <Card.Description>
                       {p_.label}: <b>{value}</b>
                     </Card.Description>
