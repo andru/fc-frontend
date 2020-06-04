@@ -180,33 +180,49 @@ export default function makeActions (wbApi) {
     });
   }
 
-  async function getTaxaWithFacets (structureId, characterId = null, values = []) {
-    const url = wbApi.sparqlQuery(`#
-    SELECT DISTINCT ?taxon ?taxonLabel ?parentTaxon ?parentTaxonLabel ?rank ?rankLabel ?p_ ?p_Label ?value 
-    WHERE {
-      SERVICE wikibase:label {bd:serviceParam wikibase:language "en" }
-      ?taxon wdt:${taxonRankPID} ?rank.
-      ?p_ wdt:${relatedStructurePID}* wd:${structureId}.
-      ?p_ wdt:${relatedCharacterPID}* wd:${characterId}.
-      ?p_ wikibase:directClaim ?p .
-      ?taxon ?p ?value.
-      OPTIONAL { ?taxon wdt:${parentTaxonPID} ?parentTaxon }
-      FILTER (?value IN (${values.map(v => `"${v}"`).join(', ')}))
-    }
-    ORDER BY ASC(?taxonLabel)`);
-    return await fetch(url).then(async response => {
-      const data = wbApi.simplify.sparqlResults(await response.json());
-      /* {
-        taxon: Object { value: "QID", label: "String" }
-        parentTaxon: Object { value: "QID", label: "String" }
-        rank: Object { value: "QID", label: "String" }
-        p_: Object {value: "PID", label: "String"}
-
-      } */
-      console.log('Taxa', data)
-      return data;
-    }).catch(err => {
-      console.error(err);
+  async function getTaxaWithFacets (facets) {
+    const facetQueries = facets
+    // filter out incomplete facets
+    .filter(facet => facet[0] && facet[1] && facet[2] && facet[2].length)
+    // map each facet row to a Promise for results
+    .map(async facet => {
+      const [structureId, characterId = null, values = []] = facet;
+      const url = wbApi.sparqlQuery(`#
+      SELECT DISTINCT ?taxon ?taxonLabel ?parentTaxon ?parentTaxonLabel ?rank ?rankLabel ?p_ ?p_Label ?value 
+      WHERE {
+        SERVICE wikibase:label {bd:serviceParam wikibase:language "en" }
+        ?taxon wdt:${taxonRankPID} ?rank.
+        ?p_ wdt:${relatedStructurePID}* wd:${structureId}.
+        ?p_ wdt:${relatedCharacterPID}* wd:${characterId}.
+        ?p_ wikibase:directClaim ?p .
+        ?taxon ?p ?value.
+        OPTIONAL { ?taxon wdt:${parentTaxonPID} ?parentTaxon }
+        FILTER (?value IN (${values.map(v => `"${v}"`).join(', ')}))
+      }
+      ORDER BY ASC(?taxonLabel)`);
+      return await fetch(url).then(async response => {
+        const data = wbApi.simplify.sparqlResults(await response.json());
+        /* {
+          taxon: Object { value: "QID", label: "String" }
+          parentTaxon: Object { value: "QID", label: "String" }
+          rank: Object { value: "QID", label: "String" }
+          p_: Object {value: "PID", label: "String"}
+  
+        } */
+        // console.log('Taxa', data)
+        return data;
+      }).catch(err => {
+        console.error(err);
+      });
+    });
+    // return a Promise of all results combined into a single array
+    return Promise.all(facetQueries).then(results => {
+      // flatten all facet queries into a single result set
+      return results.reduce((acc, facetResults) => (
+        acc.concat(facetResults)
+      ), [])
+      // sort by taxon name
+      .sort((a, b) => a.taxon.label > b.taxon.label ? 1 : b.taxon.label > a.taxon.label ? -1 : 0)
     });
   }
 

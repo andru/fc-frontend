@@ -14,9 +14,9 @@ import { Main, Box, FillBox } from "./components/ui/Box";
 import theme from "./theme";
 import "semantic-ui-css/semantic.min.css";
 
-import Home from "./components/Home";
-import StructureCharacterSearch from "./components/StructureCharacterSearch";
-import Taxon from "./components/Taxon";
+import Home from "./pages/Home";
+import StructureCharacterSearch from "./pages/structure-character";
+import Taxon from "./pages/Taxon";
 
 const remoteWikibaseConfig = {
   instance: 'http://159.89.116.92',
