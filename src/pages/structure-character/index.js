@@ -114,6 +114,9 @@ const NoTaxonImageContainer = styled(TaxonImageBase)`
   align-items: center;
   justify-content: center;
   background: #eee;
+  i {
+    opacity: 0.5;
+  }
 `;
 
 const NoTaxonImage = () => (

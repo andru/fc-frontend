@@ -9,15 +9,17 @@ import {
 import { Segment, Dimmer, Loader, Image, Menu, Modal, Input } from "semantic-ui-react";
 import styled, { css } from "styled-components";
 import wikibaseSDK from "wikibase-sdk";
-import makeWikibaseApiActions from "./actions/wikibase-api";
-import makeWikiDataApiActions from "./actions/wikidata-api";
-import { Main, Box, FillBox } from "./components/ui/Box";
+import makeWikibaseApiActions from "actions/wikibase-api";
+import makeWikiDataApiActions from "actions/wikidata-api";
+import { Main, Box, FillBox } from "components/ui/Box";
 import theme from "./theme";
 import "semantic-ui-css/semantic.min.css";
 
-import Home from "./pages/Home";
-import StructureCharacterSearch from "./pages/structure-character";
-import Taxon from "./pages/Taxon";
+import HeaderSearch from "components/taxon-name-search";
+
+import Home from "pages/Home";
+import StructureCharacterSearch from "pages/structure-character";
+import Taxon from "pages/Taxon";
 
 const remoteWikibaseConfig = {
   instance: 'http://159.89.116.92',
@@ -135,7 +137,7 @@ function App() {
             </NavItem>
           </HeaderNav>
           <AppSearch>
-            <AppSearchInput icon='search' placeholder='Find taxa by name' />
+            <HeaderSearch actions={actions} />
           </AppSearch>
         </AppHeader>
         <AppMain gridArea="main">
@@ -150,9 +152,10 @@ function App() {
               <Route exact path="/">
                 <Home actions={actions} />
               </Route>
-              <Route path="/structure-character-search">
+              <Route path="/structure-character-search" children={() => (
                 <StructureCharacterSearch actions={actions} />
-              </Route>
+              )}
+              />
               <Route path="/taxon/:id">
                 <Taxon actions={actions} />
               </Route>

@@ -46,7 +46,7 @@ function Taxon({actions}) {
       setLoading(false);
     }
     load();
-  }, []);
+  }, [id]);
 
   function renderTaxon () {
     return <TaxonContainer>
@@ -54,8 +54,8 @@ function Taxon({actions}) {
         <TaxonName>{taxonData.name}</TaxonName>
         <TaxonAuthority>{taxonData.taxonAuthority}</TaxonAuthority>
       </TaxonId>
-      <h4><Link to={`/taxon/${taxonData.parentTaxon.value}`}>{taxonData.parentTaxon.label}</Link></h4>
-      <h4><Link to={`/taxon/${taxonData.family.value}`}>{taxonData.family.label}</Link></h4>
+      {taxonData.parentTaxon && <h4><Link to={`/taxon/${taxonData.parentTaxon.value}`}>{taxonData.parentTaxon.label}</Link></h4>}
+      {taxonData.family && <h4><Link to={`/taxon/${taxonData.family.value}`}>{taxonData.family.label}</Link></h4>}
       <em>{taxonData.commonName || 'No common name'}</em>
 
     </TaxonContainer>

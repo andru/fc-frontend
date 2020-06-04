@@ -4,7 +4,7 @@ const taxonRankPID = "P15";
 const parentTaxonPID = "P16";
 const relatedStructurePID = "P9";
 const relatedCharacterPID = "P11";
-
+const taxonNamePID = "P14";
 
 /**
  * Return a list of actions scoped with a wikibase-api instance
@@ -250,19 +250,43 @@ export default function makeActions (wbApi) {
 
   async function getTaxonById (taxonId) {
     const url = wbApi.sparqlQuery(`
-    SELECT ?name ?family ?familyLabel ?rank ?rankLabel ?parentTaxon ?parentTaxonLabel ?commonName ?taxonId ?taxonAuthority ?taxonRank ?taxonRankLabel   {
-      BIND (<http://wikibase.svc/entity/${taxonId}> AS ?taxon)
+    SELECT ?name ?family ?familyLabel ?rank ?rankLabel ?parentTaxon ?parentTaxonLabel ?commonName ?taxonId ?taxonAuthority ?taxonRank ?taxonRankLabel WHERE {
+      BIND(<http://wikibase.svc/entity/${taxonId}> AS ?taxon)
       ?taxon wdt:P14 ?name;
-             wdt:P17 ?family;
-             wdt:P15 ?rank;
-             wdt:P16 ?parentTaxon;
-             wdt:P18 ?commonName.
-      ?taxon p:P23 [ ps:P23 ?taxonId; 
-                     pq:P21 ?taxonAuthority;
-                     pq:P15 ?taxonRank;].
-    
-      SERVICE wikibase:label {bd:serviceParam wikibase:language "en" }
+             wdt:P15 ?rank.
+      OPTIONAL {
+        ?taxon wdt:P17 ?family;
+      }
+      OPTIONAL { 
+        ?taxon wdt:P16 ?parentTaxon.
+      } 
+      OPTIONAL {
+        ?taxon wdt:P18 ?commonName
+      }
+      OPTIONAL {
+        ?taxon p:P23 _:b1.
+        _:b1 ps:P23 ?taxonId;
+             pq:P21 ?taxonAuthority;
+             pq:P15 ?taxonRank.
+      }
+      SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
     }`);
+    return await fetch(url).then(async response => {
+      const data = wbApi.simplify.sparqlResults(await response.json());
+      console.log('Taxon', data)
+      return data;
+    }).catch(err => {
+      console.error(err);
+    });
+  }
+
+  async function searchTaxaByName (partialTaxonName) {
+    const url = wbApi.sparqlQuery(`SELECT ?taxon ?taxonName{
+      ?taxon wdt:${instanceOfPID} "taxon".
+      ?taxon wdt:${taxonNamePID} ?taxonName.
+      BIND (STRLEN(?taxonName) AS ?strlen)
+      FILTER (REGEX(?taxonName, "${partialTaxonName}", "i"))
+    } ORDER BY ASC(?strlen) ASC(?taxonName) LIMIT 20 `);
     return await fetch(url).then(async response => {
       const data = wbApi.simplify.sparqlResults(await response.json());
       console.log('Taxon', data)
@@ -282,5 +306,6 @@ export default function makeActions (wbApi) {
     getAllValuesForStructureAndCharacter,
     getTaxaWithFacets,
     getTaxonById,
+    searchTaxaByName,
   }
 }
