@@ -1,0 +1,13 @@
+server {
+        listen ${NGINX_PORT};
+        listen [::]:${NGINX_PORT};
+
+        root /usr/share/nginx/html;
+        index index.html;
+
+        server_name ${NGINX_HOST} www.{NGINX_HOST};
+
+        location / {
+                try_files $uri $uri/ /index.html;
+        }
+}
