@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";  
-import { Button, Icon, Dropdown, List, Placeholder, Loader, Label, Input, Card } from "semantic-ui-react";
+import { Button, Icon, Dropdown, List, Placeholder, Loader, Label, Input, Card, Image } from "semantic-ui-react";
 import { FillBox, ScrollingFillBox } from "components/ui/Box";
 import { useHistory } from "react-router-dom";
 
@@ -99,6 +99,28 @@ const AddFacetButton = ({onClick}) => (
     Add Facet
   </Button>
 )
+const TaxonImageBase = styled.div`
+  width: 100%;
+  height: 250px;
+  background-size:cover;
+  background-position: center;
+`;
+const TaxonImage = styled(TaxonImageBase)`
+  background-image: url(${props => props.imageUrl});
+`;
+
+const NoTaxonImageContainer = styled(TaxonImageBase)`
+  display:flex;
+  align-items: center;
+  justify-content: center;
+  background: #eee;
+`;
+
+const NoTaxonImage = () => (
+  <NoTaxonImageContainer>
+    <Icon name="file image outline" size="huge" color="grey" />
+  </NoTaxonImageContainer>
+)
 
 
 const allStructures = [];
@@ -113,7 +135,8 @@ function StructureCharacterSearch({actions}) {
     getAllSubpropertyValuesOf,
     getAllCharactersForStructure,
     getAllValuesForStructureAndCharacter,
-    getTaxaWithFacets
+    getTaxaWithFacets,
+    getWikiDataImagesForTaxa
   } = actions;
 
   const history = useHistory();
@@ -127,6 +150,8 @@ function StructureCharacterSearch({actions}) {
   const [isInitialised, setInitialised] = useState(false);
   const [isFetchingTaxa, setFetchingTaxa] = useState(false);
   const [taxaResults, setTaxaResults] = useState([]);
+  const [isFetchingTaxaImages, setFetchingTaxaImages] = useState(true);
+  const [taxaImages, setTaxaImages] = useState({});
 
   const [facetRows, setFacetRows] = useState([[undefined, undefined, []]]);
 
@@ -135,10 +160,10 @@ function StructureCharacterSearch({actions}) {
     const fetchStructures = async () => {
       const data = await getTopLevelPlantStructureProperties();
       if (data) {
-        allStructures.push(...data.map(row => ({
+        return data.map(row => ({
           id: row.property.value,
           label: row.property.label
-        })))
+        }))
       } else {
         console.error('Oops no structures')
       }
@@ -146,44 +171,58 @@ function StructureCharacterSearch({actions}) {
     const fetchCharacters = async () => {
       const characters = await getAllSuperCharacters();
       if (characters) {
-        allCharacters.push(...characters);
+        return characters;
       } else {
         console.error('Oops no characters');
       }
     }
     const initialise = async () => {
-      await Promise.all([fetchStructures(), fetchCharacters()]);
+      const [structures, characters] = await Promise.all([fetchStructures(), fetchCharacters()]);
+      // filter structures to only return those which have characters
+      allStructures.push(...structures.filter(structure => characters.findIndex(character => character.superStructure === structure.id) > -1));
+      allCharacters.push(...characters)
       setInitialised(true);
     }
     initialise();
   }, []);
 
+  const doSearch = async (searchFacetRows) => {
+    setFetchingTaxa(true);
+    setFetchingTaxaImages(true);
+    if (!searchFacetRows) {
+      searchFacetRows = facetRows;
+    }
+    const taxa = await getTaxaWithFacets(searchFacetRows);
+    setTaxaResults(taxa);
+    setFetchingTaxa(false);
+    const taxaImages = await getWikiDataImagesForTaxa(taxa.map(row => row.taxon.label));
+    setTaxaImages(taxaImages);
+    setFetchingTaxaImages(false);
+  }
+
+  // handler for the onChange event of a FacetRow
   const handleFacetRowChange = (facetIndex, [structure, character, values]) => {
-    // fetch all taxa with a value matching the selected property or any of its subproperties
+    // copy factetRows and update with the new facet info
     const newFacetRows = [...facetRows];
     newFacetRows[facetIndex] = [structure, character, values];
     setFacetRows(newFacetRows);
-    setFetchingTaxa(true);
-    const go = async () => {
-      const taxa = await getTaxaWithFacets(newFacetRows);
-      setTaxaResults(taxa);
-      setFetchingTaxa(false);
-    }
-    go(); 
+    // run the search with the updated facet rows
+    doSearch(newFacetRows); 
   }
 
+  // handler for the onRemove event of a FacetRow
   const handleFacetRowRemove = (facetIndex) => {
+    // copy facetRows and update to remove the facet at index `facetIndex`
     const newFacetRows = [...facetRows];
     newFacetRows.splice(facetIndex, 1);
     setFacetRows(newFacetRows);
+    // run the search with the updated facetRows
+    doSearch(newFacetRows)
   }
 
   const handleAddFacetClick = () => {
-    console.log("Adding facet");
     setFacetRows([...facetRows, [undefined, undefined, []]]);
   }
-
-
 
 //   const renderSubPropertyTree = (branch) => branch.map(row => (<StructureListItem key={row.property.value}>
 //     <List.Icon name={row.children && row.children.length ? 'angle right' : 'bullseye'} />
@@ -228,6 +267,14 @@ function StructureCharacterSearch({actions}) {
             <Card.Group>
             {taxaResults.map(({taxon, parentTaxon, rank, p_, value}) => (
                <Card key={taxon.value} link onClick={() => history.push(`/taxon/${taxon.value}`)}>
+                  {isFetchingTaxaImages
+                    ? <Placeholder>
+                        <Placeholder.Image square />
+                      </Placeholder>
+                    : taxaImages[taxon.label]
+                      ? <TaxonImage imageUrl={taxaImages[taxon.label]} />
+                      : <NoTaxonImage />
+                  }
                   <Card.Content>
                     <Card.Header>{taxon.label}</Card.Header>
                     <Card.Meta>{parentTaxon.label}</Card.Meta>

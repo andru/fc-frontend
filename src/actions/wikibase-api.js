@@ -172,6 +172,7 @@ export default function makeActions (wbApi) {
       const data = wbApi.simplify.sparqlResults(await response.json());
       /* {
         character: Object { value: "PID", label: "String" }
+        superStructure: "PID"
       } */
       console.log('getAllSuperCharacters', data)
       return data;//.map(row => row.character);

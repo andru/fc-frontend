@@ -10,6 +10,7 @@ import { Segment, Dimmer, Loader, Image, Menu, Modal, Input } from "semantic-ui-
 import styled, { css } from "styled-components";
 import wikibaseSDK from "wikibase-sdk";
 import makeWikibaseApiActions from "./actions/wikibase-api";
+import makeWikiDataApiActions from "./actions/wikidata-api";
 import { Main, Box, FillBox } from "./components/ui/Box";
 import theme from "./theme";
 import "semantic-ui-css/semantic.min.css";
@@ -26,6 +27,11 @@ const remoteWikibaseConfig = {
 const localWikibaseConfig = {
   instance: 'http://localhost',
   sparqlEndpoint: 'http://localhost:8989/bigdata/sparql'
+}
+
+const wikidataEndpoint = {
+  instance: 'http://wikidata.org',
+  sparqlEndpoint: 'http://query.wikidata.org/sparql'
 }
 
 const AppGrid = styled.div`
@@ -102,9 +108,13 @@ const NavItem = styled(({ className, ...props }) => (
 
 // configure a wikibase api instance
 const wbApi = wikibaseSDK(remoteWikibaseConfig);
+const wdApi = wikibaseSDK(wikidataEndpoint);
 
 // get an object of actions which all components can use to query for results for wikibase
-const actions = makeWikibaseApiActions(wbApi);
+const actions = {
+  ...makeWikibaseApiActions(wbApi),
+  ...makeWikiDataApiActions(wdApi)
+}
 
 function App() {
   const [isFetching, setIsFetching] = useState(false);

@@ -83,6 +83,7 @@ export default function StructureCharacterFacetRow (props) {
         value: structure.id
       }))}
       loading={loading}
+      disabled={loading}
       value={structure}
       onChange={handleStructureSelect}
     />
@@ -91,7 +92,7 @@ export default function StructureCharacterFacetRow (props) {
       search
       selection
       options={characters}
-      disabled={!characters.length}
+      disabled={loading}
       loading={loading}
       value={character}
       onChange={handleCharacterSelect}
