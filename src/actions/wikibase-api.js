@@ -1,11 +1,18 @@
 // @TODO - look these PIDs up with the api
 const instanceOfPID = "P4";
-const taxonRankPID = "P15";
-const parentTaxonPID = "P16";
+const taxonNamePID = "P13";
+const taxonRankPID = "P14";
+const parentTaxonPID = "P15";
 const relatedStructurePID = "P9";
-const relatedCharacterPID = "P11";
-const taxonNamePID = "P14";
+const relatedCharacterPID = "P10";
 
+const acceptedIdPID = "P22";
+const taxonAuthorityPID = "P20";
+const commonNamePID = "P17";
+const taxonFamilyPID = "P16";
+
+const morphologyStatementPID = "P32";
+const characterStateValuePID = "P33";
 /**
  * Return a list of actions scoped with a wikibase-api instance
  * @param {Object}      An instance wikibase-api  
@@ -19,13 +26,14 @@ export default function makeActions (wbApi) {
    */
   async function getTopLevelPlantStructureProperties() {
       const url = wbApi.sparqlQuery(`
-      SELECT DISTINCT ?property ?propertyLabel WHERE {
-        ?property wdt:${instanceOfPID} "plant superstructure".
-        FILTER( NOT EXISTS {
-          ?property wdt:${relatedStructurePID} ?parentStructure.
-        })
-        SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
-      } ORDER BY ASC(?propertyLabel)
+      SELECT ?property ?propertyLabel {
+        SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
+       ?property wdt:${instanceOfPID} "plant superstructure".
+               FILTER( NOT EXISTS {
+               ?property wdt:${relatedStructurePID} ?parentStructure.
+             })
+     }
+     ORDER BY ASC(?propertyLabel)
     `);
 
     return await fetch(url).then(async response => {
@@ -162,11 +170,12 @@ export default function makeActions (wbApi) {
     const url = wbApi.sparqlQuery(`#
     SELECT DISTINCT ?superStructure ?character ?characterLabel  WHERE {
       SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
-      ?character wdt:P4 "plant supercharacter".
-      ?character ^wdt:P11 ?relatedStructure.
-      ?relatedStructure wdt:P9+ ?superStructure.
+      ?c wdt:${instanceOfPID} "plant character".
+      ?c wdt:${relatedStructurePID} ?relatedStructure.
+      ?c wdt:${relatedCharacterPID}* ?character.
+      ?relatedStructure wdt:${relatedStructurePID}+ ?superStructure.
     }
-    ORDER BY ASC(?superStructure) ASC(?character)`);
+    ORDER BY ASC(?superStructure) ASC(?characterLabel)`);
 
     return await fetch(url).then(async response => {
       const data = wbApi.simplify.sparqlResults(await response.json());
@@ -189,16 +198,28 @@ export default function makeActions (wbApi) {
     .map(async facet => {
       const [structureId, characterId = null, values = []] = facet;
       const url = wbApi.sparqlQuery(`#
-      SELECT DISTINCT ?taxon ?taxonLabel ?parentTaxon ?parentTaxonLabel ?rank ?rankLabel ?p_ ?p_Label ?value 
+      SELECT DISTINCT ?taxon ?taxonLabel ?parentTaxon ?parentTaxonLabel ?rank ?rankLabel ?superStructure ?superStructureLabel ?superCharacter ?superCharacterLabel ?value 
       WHERE {
         SERVICE wikibase:label {bd:serviceParam wikibase:language "en" }
+        VALUES ?values {${values.map(v => `"${v}"`).join(' ')}}
         ?taxon wdt:${taxonRankPID} ?rank.
-        ?p_ wdt:${relatedStructurePID}* wd:${structureId}.
-        ?p_ wdt:${relatedCharacterPID}* wd:${characterId}.
-        ?p_ wikibase:directClaim ?p .
-        ?taxon ?p ?value.
+        ?taxon p:${morphologyStatementPID} _:st.
+        _:st pq:${relatedStructurePID}*  wd:${structureId}.
+        hint:Prior hint:gearing "forward".
+        _:st pq:${relatedStructurePID} ?superStructure.
+
+        _:st pq:${relatedCharacterPID}* wd:${characterId}.
+        hint:Prior hint:gearing "forward".
+        _:st pq:${relatedCharacterPID} ?superCharacter.
+
+        _:st pq:${characterStateValuePID} ?values.
+        _:st pq:${characterStateValuePID} ?value.
+        
+        wd:${structureId} wdt:${relatedStructurePID}* ?superStructure.
+        hint:Prior hint:gearing "forward".
+
         OPTIONAL { ?taxon wdt:${parentTaxonPID} ?parentTaxon }
-        FILTER (?value IN (${values.map(v => `"${v}"`).join(', ')}))
+        #FILTER (?value IN (${values.map(v => `"${v}"`).join(', ')}))
       }
       ORDER BY ASC(?taxonLabel)`);
       return await fetch(url).then(async response => {
@@ -207,8 +228,8 @@ export default function makeActions (wbApi) {
           taxon: Object { value: "QID", label: "String" }
           parentTaxon: Object { value: "QID", label: "String" }
           rank: Object { value: "QID", label: "String" }
-          p_: Object {value: "PID", label: "String"}
-  
+          superStructure: Object {value: "PID", label: "String"}
+          value: String
         } */
         // console.log('Taxa', data)
         return data;
@@ -230,12 +251,15 @@ export default function makeActions (wbApi) {
 
   async function getAllValuesForStructureAndCharacter (structureId, characterId) {
     const url = wbApi.sparqlQuery(`
-    SELECT DISTINCT ?value WHERE {
-      ?p_ wdt:${relatedStructurePID}* wd:${structureId}.
-      ?p_ wdt:${relatedCharacterPID}* wd:${characterId}.
-      ?p_ wikibase:directClaim ?p .
-      ?item ?p ?value . 
-    }`);
+      SELECT DISTINCT ?value WHERE {
+        ?taxon p:P32 _:st.
+       _:st pq:${relatedStructurePID}* wd:${structureId}.
+       hint:Prior hint:gearing "forward".
+       _:st pq:${relatedCharacterPID}* wd:${characterId}.
+       hint:Prior hint:gearing "forward".
+       _:st pq:${characterStateValuePID} ?value.
+     } ORDER BY ASC(?value)
+     `);
     return await fetch(url).then(async response => {
       const data = wbApi.simplify.sparqlResults(await response.json());
       /* {
@@ -252,22 +276,22 @@ export default function makeActions (wbApi) {
     const url = wbApi.sparqlQuery(`
     SELECT ?name ?family ?familyLabel ?rank ?rankLabel ?parentTaxon ?parentTaxonLabel ?commonName ?taxonId ?taxonAuthority ?taxonRank ?taxonRankLabel WHERE {
       BIND(<http://wikibase.svc/entity/${taxonId}> AS ?taxon)
-      ?taxon wdt:P14 ?name;
-             wdt:P15 ?rank.
+      ?taxon wdt:${taxonNamePID} ?name;
+             wdt:${taxonRankPID} ?rank.
       OPTIONAL {
-        ?taxon wdt:P17 ?family;
+        ?taxon wdt:${taxonFamilyPID} ?family;
       }
       OPTIONAL { 
-        ?taxon wdt:P16 ?parentTaxon.
+        ?taxon wdt:${parentTaxonPID} ?parentTaxon.
       } 
       OPTIONAL {
-        ?taxon wdt:P18 ?commonName
+        ?taxon wdt:${commonNamePID} ?commonName
       }
       OPTIONAL {
-        ?taxon p:P23 _:b1.
-        _:b1 ps:P23 ?taxonId;
-             pq:P21 ?taxonAuthority;
-             pq:P15 ?taxonRank.
+        ?taxon p:${acceptedIdPID} _:b1.
+        _:b1 ps:${acceptedIdPID} ?taxonId;
+             pq:${taxonAuthorityPID} ?taxonAuthority;
+             pq:${taxonRankPID} ?taxonRank.
       }
       SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
     }`);

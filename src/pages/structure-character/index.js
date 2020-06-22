@@ -268,7 +268,7 @@ function StructureCharacterSearch({actions}) {
           <TaxaPlaceholder /> : ''}
           {!isFetchingTaxa && taxaResults.length ? <TaxaResults>
             <Card.Group>
-            {taxaResults.map(({taxon, parentTaxon, rank, p_, value}) => (
+            {taxaResults.map(({taxon, parentTaxon, rank, superStructure, superCharacter, value}) => (
                <Card key={taxon.value} link onClick={() => history.push(`/taxon/${taxon.value}`)}>
                   {isFetchingTaxaImages
                     ? <Placeholder>
@@ -282,7 +282,7 @@ function StructureCharacterSearch({actions}) {
                     <Card.Header>{taxon.label}</Card.Header>
                     {parentTaxon && <Card.Meta>{parentTaxon.label}</Card.Meta>}
                     <Card.Description>
-                      {p_.label}: <b>{value}</b>
+                      {superStructure.label} {superCharacter.label} <b>{value}</b>
                     </Card.Description>
                   </Card.Content>
                 </Card>
