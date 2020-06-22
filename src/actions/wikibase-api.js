@@ -167,15 +167,22 @@ export default function makeActions (wbApi) {
    */
   async function getAllSuperCharacters (structureId) {
     // this query is much faster, but returns all characters, so needs some filtering
-    const url = wbApi.sparqlQuery(`#
+    const url = wbApi.sparqlQuery(`# Get top level characters and their related superstructure  
     SELECT DISTINCT ?superStructure ?character ?characterLabel  WHERE {
       SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
       ?c wdt:${instanceOfPID} "plant character".
       ?c wdt:${relatedStructurePID} ?relatedStructure.
+      ?relatedStructure wdt:${relatedStructurePID}* ?superStructure.
       ?c wdt:${relatedCharacterPID}* ?character.
-      ?relatedStructure wdt:${relatedStructurePID}+ ?superStructure.
+
+      ?c wdt:${relatedCharacterPID}* ?character.
+
+      FILTER( NOT EXISTS {
+        ?character wdt:${relatedCharacterPID} ?noParent.
+      })
     }
-    ORDER BY ASC(?superStructure) ASC(?characterLabel)`);
+    ORDER BY ASC(?superStructure) ASC(?characterLabel)
+`);
 
     return await fetch(url).then(async response => {
       const data = wbApi.simplify.sparqlResults(await response.json());
