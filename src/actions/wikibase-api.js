@@ -204,20 +204,18 @@ export default function makeActions (wbApi) {
         VALUES ?values {${values.map(v => `"${v}"`).join(' ')}}
         ?taxon wdt:${taxonRankPID} ?rank.
         ?taxon p:${morphologyStatementPID} _:st.
-        _:st pq:${relatedStructurePID}*  wd:${structureId}.
-        hint:Prior hint:gearing "forward".
-        _:st pq:${relatedStructurePID} ?superStructure.
 
-        _:st pq:${relatedCharacterPID}* wd:${characterId}.
+        _:st pq:${relatedStructurePID} ?superStructure.
+        ?superStructure wdt:${relatedStructurePID}* wd:${structureId}.
         hint:Prior hint:gearing "forward".
+
         _:st pq:${relatedCharacterPID} ?superCharacter.
+        ?superCharacter wdt:${relatedCharacterPID}* wd:${characterId}.
+        hint:Prior hint:gearing "forward".
 
         _:st pq:${characterStateValuePID} ?values.
         _:st pq:${characterStateValuePID} ?value.
         
-        wd:${structureId} wdt:${relatedStructurePID}* ?superStructure.
-        hint:Prior hint:gearing "forward".
-
         OPTIONAL { ?taxon wdt:${parentTaxonPID} ?parentTaxon }
         #FILTER (?value IN (${values.map(v => `"${v}"`).join(', ')}))
       }
@@ -253,9 +251,11 @@ export default function makeActions (wbApi) {
     const url = wbApi.sparqlQuery(`
       SELECT DISTINCT ?value WHERE {
         ?taxon p:P32 _:st.
-       _:st pq:${relatedStructurePID}* wd:${structureId}.
+        _:st pq:${relatedStructurePID} _:relatedStructure.
+       _:relatedStructure wdt:${relatedStructurePID}* wd:${structureId}.
        hint:Prior hint:gearing "forward".
-       _:st pq:${relatedCharacterPID}* wd:${characterId}.
+       _:st pq:${relatedCharacterPID} _:relatedCharacter.
+       _:relatedCharacter wdt:${relatedCharacterPID}* wd:${characterId}.
        hint:Prior hint:gearing "forward".
        _:st pq:${characterStateValuePID} ?value.
      } ORDER BY ASC(?value)
