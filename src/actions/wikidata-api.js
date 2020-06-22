@@ -1,7 +1,7 @@
 export default (wikidata) => {
 
   async function getWikiDataImagesForTaxa (taxaNames) {
-    const url = wikidata.sparqlQuery(`
+    const [url, body] = wikidata.sparqlQuery(`
       SELECT ?item (SAMPLE(?image) as ?mainImage) (SAMPLE(?taxonName) as ?mainTaxonName) {
         VALUES (?matchNames) { ${taxaNames.map(taxonName => `("${taxonName}")`).join(' ')} }
         ?item wdt:P31 wd:Q16521.
@@ -10,8 +10,22 @@ export default (wikidata) => {
         ?item wdt:P18 ?image.
       }
       GROUP BY ?item
-    `);
-    return await fetch(url).then(async response => {
+    `).split('?');
+    return await fetch(
+      url,
+      {
+        method: 'POST', // *GET, POST, PUT, DELETE, etc.
+        // mode: 'cors', // no-cors, *cors, same-origin
+        // cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
+        // credentials: 'same-origin', // include, *same-origin, omit
+        headers: {
+          // 'Content-Type': 'application/json'
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+        body
+      }
+    ).then(async response => {
       const data = wikidata.simplify.sparqlResults(await response.json());
       /*
       {
@@ -21,8 +35,6 @@ export default (wikidata) => {
       } 
       */
       return data;
-    }).catch(err => {
-      console.error(err);
     }).then(data => {
       // https://commons.wikimedia.org/wiki/File:Cirsium%20arvense%20with%20Bees%20Richard%20Bartz.jpg
       return Object.fromEntries(data.map(row => (
@@ -31,6 +43,8 @@ export default (wikidata) => {
           `${row.mainImage}?width=300px`
         ]
       )))
+    }).catch(err => {
+      console.error(err);
     });
   }
 
