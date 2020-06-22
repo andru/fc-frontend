@@ -5,7 +5,8 @@ import { Dropdown, List, Placeholder, Loader, Label } from "semantic-ui-react";
 import { FillBox, ScrollingFillBox } from "components/ui/Box";
 
 const Container = styled(FillBox)`
-  
+  display: flex;
+  flex-direction: column;
 `;
 
 const TaxonPlaceholder = styled(({className, children, ...props}) => (
@@ -33,6 +34,15 @@ const TaxonAuthority = styled.h4`
 
 `;
 
+const WikiDataContainer = styled.div`
+  flex: 1;
+  margin-top: 100px;
+`;
+const WikiDataIframe = styled.iframe`
+  min-height: 1000px;
+  width: 100%;
+`;
+
 function Taxon({actions}) {
   const { getTaxonById } = actions;
   const { id } = useParams();
@@ -52,7 +62,7 @@ function Taxon({actions}) {
     return <TaxonContainer>
       <TaxonId>
         <TaxonName>{taxonData.name}</TaxonName>
-        <span>(<a href={`http://localhost:8181/wiki/Item:${id}`} target="_blank">{id}</a>)</span>
+        <span>(<a href={`http://159.89.116.92/wiki/Item:${id}`} target="_blank">{id}</a>)</span>
         <TaxonAuthority>{taxonData.taxonAuthority}</TaxonAuthority>
       </TaxonId>
       {taxonData.parentTaxon && <h4><Link to={`/taxon/${taxonData.parentTaxon.value}`}>{taxonData.parentTaxon.label}</Link></h4>}
@@ -61,11 +71,21 @@ function Taxon({actions}) {
     </TaxonContainer>
   }
 
+  function renderWikiData () {
+    return <WikiDataContainer>
+      <h3>Full {taxonData.name} data ({id}) at WikiBase</h3>
+      <WikiDataIframe src={`http://159.89.116.92/wiki/Item:${id}`} />
+    </WikiDataContainer>
+  }
+
   return (
     <Container>
       {isLoading 
       ? <TaxonPlaceholder />
       : renderTaxon()}
+      {isLoading 
+      ? null
+      : renderWikiData()}
     </Container>
   );
 }
