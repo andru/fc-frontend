@@ -1,7 +1,7 @@
 # multi-stage build
 
 # first build the app
-FROM node:12.16.1-alpine AS builder
+FROM node:14.15-alpine AS builder
 
 #ADD yarn.lock /yarn.lock
 #ADD package.json /package.json
