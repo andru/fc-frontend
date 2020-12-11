@@ -1,26 +1,23 @@
-
-import wikibaseSDK from "wikibase-sdk";
-
-import makeWikibaseApiActions from "../actions/wikibase-api.js";
-import { fcEndpoint, wikidataEndpoint } from "../constants/endpoints.js";
-
-// const util = require('util');
-// const fs = require('fs');
-// const path = require('path');
-
 import util from "util";
 import fs from "fs";
 import path from "path";
-import fetch from "node-fetch";
-global.fetch = fetch;
+
+import wikibaseSDK from "wikibase-sdk";
+import makeWikibaseApiActions from "../actions/wikibase-api.js";
 
 const writeFile = util.promisify(fs.writeFile);
 
 
-const wbApi = wikibaseSDK(fcEndpoint);
-const { getTopLevelStructures, getTopLevelCharacters, getTopLevelCharactersOfStructure } = makeWikibaseApiActions(wbApi);
+export default async function fetchAndCache () {
 
-(async function fetchAndCache () {
+  const fcEndpoint = {
+    instance: process.env.REACT_APP_WIKI || 'http://localhost',
+    sparqlEndpoint: process.env.REACT_APP_SPARQL || 'http://localhost:8989/bigdata/sparql', 
+  }
+  const wbApi = wikibaseSDK(fcEndpoint);
+  const { getTopLevelStructures, getTopLevelCharacters, getTopLevelCharactersOfStructure } = makeWikibaseApiActions(wbApi);
+  
+
   console.log('Querying wikibase and pre-caching structure & character lists')
   const allStructures = await fetchStructures();
   const allCharacters = await fetchCharacters();
@@ -47,41 +44,43 @@ const { getTopLevelStructures, getTopLevelCharacters, getTopLevelCharactersOfStr
   await writeFile(`${cachePath}/structure-character.json`, JSON.stringify(cachedResults));
 
   console.log("Done!");
-})();
 
-async function fetchStructures () {
-  const data = await getTopLevelStructures();
-  if (data) {
-    return data.map(row => ({
-      id: row.structure.value,
-      label: row.structure.label
-    }))
-  } else {
-    throw new Error('Oops no structures')
+
+  async function fetchStructures () {
+    const data = await getTopLevelStructures();
+    if (data) {
+      return data.map(row => ({
+        id: row.structure.value,
+        label: row.structure.label
+      }))
+    } else {
+      throw new Error('Oops no structures')
+    }
+  }
+  
+  async function fetchCharacters () {
+    const data = await getTopLevelCharacters();
+    if (data) {
+      return data.map(row => ({
+        id: row.character.value,
+        label: row.character.label
+      }))
+    } else {
+      throw new Error('Oops no characters');
+    }
+  }
+  
+  async function fetchCharactersOfStructure (structureId) {
+    const data = await getTopLevelCharactersOfStructure(structureId);
+  
+    if (data) {
+      return data.map(row => ({
+        id: row.character.value,
+        label: row.character.label
+      }))
+    } else {
+      throw new Error('Oops no characters');
+    }
   }
 }
 
-async function fetchCharacters () {
-  const data = await getTopLevelCharacters();
-  if (data) {
-    return data.map(row => ({
-      id: row.character.value,
-      label: row.character.label
-    }))
-  } else {
-    throw new Error('Oops no characters');
-  }
-}
-
-async function fetchCharactersOfStructure (structureId) {
-  const data = await getTopLevelCharactersOfStructure(structureId);
-
-  if (data) {
-    return data.map(row => ({
-      id: row.character.value,
-      label: row.character.label
-    }))
-  } else {
-    throw new Error('Oops no characters');
-  }
-}

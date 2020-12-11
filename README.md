@@ -14,6 +14,7 @@ Run `yarn start` from the base directory to deploy a development server on local
 #### Deploying stand alone
 `docker build -t fc-frontend .`
 `docker run --name fc-frontend_1 -d -p 8080:80 fc-frontend`
+(stop and remove a running container if one exists first: `docker kill fc-frontend_1 && docker rm fc-frontend_1`)
 
 #### As part of a docker-compose config
 fc-frontend:

@@ -74,7 +74,7 @@ function Taxon({actions}) {
   function renderWikiData () {
     return <WikiDataContainer>
       <h3>Full {taxonData.name} data ({id}) at WikiBase</h3>
-      <WikiDataIframe src={`http://159.89.116.92/wiki/Item:${id}`} />
+      <WikiDataIframe src={`${process.env.REACT_APP_WIKI}/wiki/Item:${id}`} />
     </WikiDataContainer>
   }
 

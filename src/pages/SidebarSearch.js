@@ -85,19 +85,12 @@ const TaxaPlaceholder = styled(({className, children, ...props}) => (
 
 function Home({actions}) {
   const {
-    getPlantStructurePropertiesMatching,
     getTopLevelPlantStructureProperties,
     getAllSubpropertiesOf,
     getAllSubpropertyValuesOf,
     getTaxaByPropertyPathValue
   } = actions;
-  // async function doIt () {
-  //   await getPlantStructurePropertiesMatching('leaf')
-  //   await getTopLevelPlantStructureProperties()
-  //   await getAllSubpropertiesOf('P248')
-  //   await getAllSubpropertyValuesOf('P248')
-  // } 
-  // doIt();
+
   const [isFetching, setFetching] = useState(true);
   const [isFetchingSub, setFetchingSub] = useState(false);
   const [isFetchingValues, setFetchingValues] = useState(false);

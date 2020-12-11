@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
@@ -10,6 +11,7 @@ import {
 import { Segment, Dimmer, Loader, Image, Menu, Modal, Input, Icon } from "semantic-ui-react";
 import styled, { css } from "styled-components";
 import wikibaseSDK from "wikibase-sdk";
+
 import makeWikibaseApiActions from "actions/wikibase-api";
 import makeWikiDataApiActions from "actions/wikidata-api";
 import { Main, Box, FillBox } from "components/ui/Box";
@@ -20,6 +22,7 @@ import HeaderSearch from "components/taxon-name-search";
 
 import Home from "pages/Home";
 import StructureCharacterSearch from "pages/structure-character";
+import FacetedSearch from "pages/faceted-search";
 import Taxon from "pages/Taxon";
 
 import { fcEndpoint, wikidataEndpoint } from "constants/endpoints";
@@ -98,7 +101,7 @@ const NavItem = styled(({ className, ...props }) => (
 `;
 
 // configure a wikibase api instance
-const wbApi = wikibaseSDK(remoteWikibaseConfig);
+const wbApi = wikibaseSDK(fcEndpoint);
 const wdApi = wikibaseSDK(wikidataEndpoint);
 
 // get an object of actions which all components can use to query for results for wikibase
@@ -121,8 +124,8 @@ function App() {
             <NavItem to="/" exact>
               <Icon name="home" />Home
             </NavItem>
-            <NavItem to="/morphology-facets" >
-              <Icon name="search" />Morphology Facets
+            <NavItem to="/faceted-search" >
+              <Icon name="search" />Faceted Search
             </NavItem>
           </HeaderNav>
           <AppSearch>
@@ -144,6 +147,10 @@ function App() {
               <Route path="/structure-character-search"><Redirect to="/morphology-facets" /></Route>
               <Route path="/morphology-facets" children={() => (
                 <StructureCharacterSearch actions={actions} />
+              )}
+              />
+              <Route path="/faceted-search" children={() => (
+                <FacetedSearch actions={actions} />
               )}
               />
               <Route path="/taxon/:id">

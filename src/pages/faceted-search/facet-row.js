@@ -5,11 +5,11 @@ import { FillBox, ScrollingFillBox } from "components/ui/Box";
 import { useHistory } from "react-router-dom";
 import { isFinite } from "lodash";
 
-const FacetRow = styled.div`
+const FacetRowContainer = styled.div`
 
 `;
 
-export default function StructureCharacterFacetRow (props) {
+export default function FacetRow (props) {
   const {
     allStructures,
     allCharacters,
@@ -108,7 +108,7 @@ export default function StructureCharacterFacetRow (props) {
   }
 
   return (
-    <FacetRow>
+    <FacetRowContainer>
     <Dropdown
       placeholder='Structure'
       search
@@ -167,7 +167,7 @@ export default function StructureCharacterFacetRow (props) {
         </Dropdown.Menu>
       </Dropdown> */}
 
-    </FacetRow>
+    </FacetRowContainer>
   )
 
 }
