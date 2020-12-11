@@ -22,20 +22,8 @@ import Home from "pages/Home";
 import StructureCharacterSearch from "pages/structure-character";
 import Taxon from "pages/Taxon";
 
-const remoteWikibaseConfig = {
-  instance: 'http://159.89.116.92',
-  sparqlEndpoint: 'http://159.89.116.92:8989/bigdata/sparql'
-}
+import { fcEndpoint, wikidataEndpoint } from "constants/endpoints";
 
-const localWikibaseConfig = {
-  instance: 'http://localhost',
-  sparqlEndpoint: 'http://localhost:8989/bigdata/sparql'
-}
-
-const wikidataEndpoint = {
-  instance: 'http://wikidata.org',
-  sparqlEndpoint: 'http://query.wikidata.org/sparql'
-}
 
 const AppGrid = styled.div`
   display: grid;
