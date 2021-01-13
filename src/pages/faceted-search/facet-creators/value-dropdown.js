@@ -33,6 +33,7 @@ export default function ValueDropdownFacet (props) {
     <Title as="h5">{title}</Title>
     <Dropdown
       placeholder='Values'
+      fluid
       multiple={multiple}
       search
       selection

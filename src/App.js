@@ -8,12 +8,10 @@ import {
   Link,
   NavLink,
 } from "react-router-dom";
+import {Helmet} from "react-helmet";
 import { Segment, Dimmer, Loader, Image, Menu, Modal, Input, Icon } from "semantic-ui-react";
 import styled, { css } from "styled-components";
-import wikibaseSDK from "wikibase-sdk";
-
-import makeWikibaseApiActions from "actions/wikibase-api";
-import makeWikiDataApiActions from "actions/wikidata-api";
+import actions from "actions";
 import { Main, Box, FillBox } from "components/ui/Box";
 import theme from "./theme";
 import "semantic-ui-css/semantic.min.css";
@@ -23,9 +21,8 @@ import HeaderSearch from "components/taxon-name-search";
 import Home from "pages/Home";
 import StructureCharacterSearch from "pages/structure-character";
 import FacetedSearch from "pages/faceted-search";
-import Taxon from "pages/Taxon";
+import Taxon from "pages/taxon";
 
-import { fcEndpoint, wikidataEndpoint } from "constants/endpoints";
 
 
 const AppGrid = styled.div`
@@ -100,15 +97,7 @@ const NavItem = styled(({ className, ...props }) => (
   font-weight: bold;
 `;
 
-// configure a wikibase api instance
-const wbApi = wikibaseSDK(fcEndpoint);
-const wdApi = wikibaseSDK(wikidataEndpoint);
 
-// get an object of actions which all components can use to query for results for wikibase
-const actions = {
-  ...makeWikibaseApiActions(wbApi),
-  ...makeWikiDataApiActions(wdApi)
-}
 
 function App() {
   const [isFetching, setIsFetching] = useState(false);
@@ -117,6 +106,9 @@ function App() {
 
   return (
     <Router>
+      <Helmet>
+        <title>FloraCommons</title>
+      </Helmet>
       <AppGrid>
         <AppHeader gridArea="header">
           <AppTitle>Flora Commons</AppTitle>

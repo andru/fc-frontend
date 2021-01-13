@@ -1,0 +1,11 @@
+{
+  "plugins": [
+    ["babel-plugin-module-resolver-resolver", {
+      "root": ["src"],
+      "alias": {
+        "constants": "../../constants",
+        "actions": "../../actions"
+      }
+    }]
+  ]
+}

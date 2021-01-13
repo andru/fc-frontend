@@ -1,35 +1,92 @@
-// @TODO - look these PIDs up with the api
-const fcUIDPID = "P1";
-const instanceOfPID = "P4";
-const taxonNamePID = "P16";
-const taxonRankPID = "P17";
-const parentTaxonPID = "P18";
-const substructureOfPID = "P9";
-const subcharacterOfPID = "P10";
-const relatedStructurePID = "P11";
+import {wbApi, wdApi} from "./_init";
+import { getPID, getUID } from "./floracommons/pid-uid";
+
+import { fetchTaxonById } from "./floracommons/get-taxon";
+import { fetchAllEntityProvenances } from "./floracommons/provenance";
 
 
-const acceptedIdPID = "P25";
-const taxonAuthorityPID = "P23";
-const commonNamePID = "P20";
-const taxonFamilyPID = "P19";
+/**
+ * Given a wikibase API claims object, add labels for entity ids directly to the claims object,
+ * and return a Map of paths to statements with referenced lables
+ * @param {Unsimplified claims object from Wikibase API result} claims 
+ * @returns <Map> A map of entity ids, to an array of [claim property id, statement index, label]
+ */
+export async function addClaimLabels (claims) {
+  // iterate through all claims
+  // find instances of datavalues of type "wikibase-entityid"
+  // make a record to come back and enrich with a label when resolved from the API
+  const entities = new Map();
+  for (const propertyId in claims) {
+    if (!claims.hasOwnProperty(propertyId)) continue;
+    const propertyClaims = claims[propertyId];
+    for (let i = 0; i < propertyClaims.length; i++) {
+      const claim = propertyClaims[i];
+      if (claim?.mainsnak?.datavalue?.type==="wikibase-entityid" && claim?.mainsnak?.datavalue?.value?.id) {
+        const entityId = claim.mainsnak.datavalue.value.id;
+        // set the path in claims object to enrich with label when resolved
+        const path = [propertyId, i]
+        entities.has(entityId) 
+          ? entities.get(entityId).paths.push(path)
+          : entities.set(entityId, {label: undefined, paths:[path]});
+      }
+    }
+  }
 
-const morphologyStatementPID = "P35";
-const morphologyStatementValuePID = "P36";
-const morphologyStatementStructurePID = "P40";
-const morphologyStatementStructureConstraintPID = "P41";
-const morphologyStatementCharacterPID = "P42";
+  if (!entities.size) {
+    return new Map();
+  }
 
-const distributionPID = "P29";
+  // construct url for getting entity labels
+  // @TODO - at wikibase this is limited to batches of 50, check floracommons config!
+  const url = wbApi.getEntities({
+    ids: [...entities.keys()],
+    languages: [ 'en' ],
+    props: [ 'labels' ]
+  })
 
+  // const url = wbApi.sparqlQuery(`SELECT ?id ?label {
+  //   VALUES ?id {${entities.keys().map(key => `wd:${key}`)}}
+  //   ?id rdfs:label ?label.
+  // }`);
 
-const provenancePID = "P15";
+  // fetch API result
+  return await fetch(url).then(async response => {
+    const r = await response.json();
+    // enrich the provided claims with labels returned from the API
+    
+    if (r?.entities) {
+      if (Object.keys(r.entities).length !== entities.size) {
+        throw new Error(`Number of entities returned from Wikibase API differed from those requested: ${r.entities.keys().length} vs ${entities.keys().length}`);
+      }
+      // iterate through API results 
+      for (const entityId in r.entities) {
+        if (!entities.has(entityId)) continue;
+        const label = r.entities[entityId]?.labels?.en?.value;
+        if (label) {
+          // iterate through statements paths for claims, and enrich statement with label 
+          const entity = entities.get(entityId);
+          entity.label = label;
+          entity.paths.forEach(path => {
+            claims[path[0]][path[1]].mainsnak.datavalue.value.label = label;
+          })
+        }
+      }
+      return entities;
+    } else {
+      throw new Error(r)
+    }
+
+  }).catch(err => {
+    console.error(err);
+    throw new Error(err);
+  });
+}
 /**
  * Return a list of actions scoped with a wikibase-api instance
  * @param {Object}      An instance wikibase-api  
  * @return {Array}      An object of action functions
  */
-export default function makeActions (wbApi) {
+export default function makeActions () {
     
   /**
    * Fetch all plant structure properties without a [subproperty of] statement
@@ -39,10 +96,10 @@ export default function makeActions (wbApi) {
       const url = wbApi.sparqlQuery(`
       SELECT ?structure ?structureLabel {
         #SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
-        ?structure wdt:${instanceOfPID} "plant superstructure".
+        ?structure wdt:${getPID('core/instance of')} "plant superstructure".
         ?structure rdfs:label ?structureLabel.
         FILTER( NOT EXISTS {
-          ?structure wdt:${substructureOfPID} ?parentStructure.
+          ?structure wdt:${getPID("core/substructure of")} ?parentStructure.
         })
      }
      ORDER BY ASC(?structureLabel)
@@ -50,13 +107,7 @@ export default function makeActions (wbApi) {
 
     return await fetch(url).then(async response => {
       const data = wbApi.simplify.sparqlResults(await response.json());
-      /*{
-        property: {
-          value: "PID",
-          label: "en label"
-        }
-      }*/
-      // console.log('Structures', data)
+
       return data;
     }).catch(err => {
       console.error(err);
@@ -75,13 +126,13 @@ export default function makeActions (wbApi) {
   //   SELECT ?property ?propertyLabel ?parentProperty WHERE {
   //     SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
       
-  //     ?property wdt:${instanceOfPID} "plant structure".
+  //     ?property wdt:${getPID('core/instance of')} "plant structure".
   //     ?property rdfs:label ?label 
       
   //     FILTER(LANG(?label) ="en"). 
   //     FILTER (regex(?label,"^${string}")).   
       
-  //     OPTIONAL {?property wdt:${substructureOfPID} ?parentProperty.}
+  //     OPTIONAL {?property wdt:${getPID("core/substructure of")} ?parentProperty.}
   //   }
   //   `);
 
@@ -105,8 +156,8 @@ export default function makeActions (wbApi) {
 
   async function getAllSubpropertiesOf (propertyId) {
     const url = wbApi.sparqlQuery(`SELECT DISTINCT ?property ?propertyLabel ?parent WHERE {
-      ?property wdt:${instanceOfPID}+ wd:${propertyId}.
-      OPTIONAL {?property wdt:${substructureOfPID} ?parent.}
+      ?property wdt:${getPID('core/instance of')}+ wd:${propertyId}.
+      OPTIONAL {?property wdt:${getPID("core/substructure of")} ?parent.}
       SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
     }`);
     return await fetch(url).then(async response => {
@@ -155,13 +206,13 @@ export default function makeActions (wbApi) {
   //   SELECT DISTINCT ?character ?characterLabel WHERE {
   //     SERVICE wikibase:label { bd:serviceParam wikibase:language "[AUTO_LANGUAGE],en". }
   //     # all morphology properties
-  //     ?property wdt:${instanceOfPID} "morphology property". #property instance of "morphology property"
+  //     ?property wdt:${getPID('core/instance of')} "morphology property". #property instance of "morphology property"
   //     # reduce to properties which are related to the given structure
-  //     ?property wdt:${substructureOfPID}* wd:${structureId}.
+  //     ?property wdt:${getPID("core/substructure of")}* wd:${structureId}.
   //     # get the related character for each property
-  //     ?property wdt:${subcharacterOfPID} ?character.
+  //     ?property wdt:${getPID('core/subcharacter of')} ?character.
   //     # reduce to top level characters
-  //     ?character wdt:${instanceOfPID} "plant supercharacter"
+  //     ?character wdt:${getPID('core/instance of')} "plant supercharacter"
 
   //   }
   //   ORDER BY ASC(?characterLabel)
@@ -186,11 +237,11 @@ export default function makeActions (wbApi) {
   async function getTopLevelCharacters () {
     const url = wbApi.sparqlQuery(`# Get top level characters and their related superstructure  
     SELECT DISTINCT ?character ?characterLabel  WHERE {
-      ?character wdt:${instanceOfPID} "plant character".
+      ?character wdt:${getPID('core/instance of')} "plant character".
       ?character rdfs:label ?characterLabel.
 
       FILTER( NOT EXISTS {
-        ?character wdt:${subcharacterOfPID} ?noParent.
+        ?character wdt:${getPID('core/subcharacter of')} ?noParent.
       })
     }
     ORDER BY ASC(?characterLabel)
@@ -218,14 +269,14 @@ export default function makeActions (wbApi) {
     const url = wbApi.sparqlQuery(`# 
       # Get top level characters and their related superstructure  
       SELECT DISTINCT ?character ?characterLabel WHERE {
-        ?character wdt:${instanceOfPID} "plant character".
-        ?character wdt:${relatedStructurePID} ?relatedStructure.
-        ?relatedStructure wdt:${substructureOfPID}* wd:${structureId}.
+        ?character wdt:${getPID('core/instance of')} "plant character".
+        ?character wdt:${getPID("core/related structure")} ?relatedStructure.
+        ?relatedStructure wdt:${getPID("core/substructure of")}* wd:${structureId}.
 
         ?character rdfs:label ?characterLabel.
 
         FILTER( NOT EXISTS {
-          ?character wdt:${subcharacterOfPID} ?noParent.
+          ?character wdt:${getPID('core/subcharacter of')} ?noParent.
         })
       }
       ORDER BY ASC(?characterLabel)
@@ -249,13 +300,15 @@ export default function makeActions (wbApi) {
       return '';
     } 
     return `
-      ?taxon wdt:${parentTaxonPID}* ${facet}
+      ?taxon wdt:${getPID("taxon/parent taxon")}* ${facet}
     `;
   }
 
   // TREATS FACETS AS /AND/ BOOLEAN QUERIES
-  async function getTaxaWithFacets (morphFacets, simpleFacets) {
-
+  async function getTaxaWithFacets (morphFacets, simpleFacets, queryOptions) {
+    queryOptions = queryOptions ? queryOptions : {
+      breakCache: false
+    }
     const mf = morphFacets.filter(facet => facet[0] && facet[1] && facet[2] && facet[2].length);
     const numFacets = mf.length;
     const addIf = (condition, fragment) => condition ? fragment : '';
@@ -279,36 +332,34 @@ export default function makeActions (wbApi) {
         ${ addIf(simpleFacets.distribution.length, `VALUES ?distValues {${simpleFacets.distribution.map(v => `"${v}"`).join(' ')}}`)}
 
         ${ addIf(simpleFacets.family.length, `
-          ?taxon wdt:${parentTaxonPID}+ ?families.
+          ?taxon wdt:${getPID("taxon/parent taxon")}+ ?families.
         `)}
         ${ addIf(simpleFacets.rank.length, `
-          ?taxon wdt:${taxonRankPID}+ ?ranks.
+          ?taxon wdt:${getPID("taxon/rank")} ?ranks.
         `)}
         ${ addIf(simpleFacets.distribution.length, `
-          ?taxon wdt:${distributionPID} ?distValues.#;
-                 #wdt:${distributionPID} ?distribution.
+          ?taxon wdt:${getPID("taxon/distribution")} ?distValues.
         `)}
 
-        ?taxon wdt:${taxonRankPID} ?rank.
+        ?taxon wdt:${getPID("taxon/rank")} ?rank.
 
         ${addIf(mf.length, mf.map(([structureId, characterId], i) => `
 
-        ?st${i} pq:${morphologyStatementStructurePID}/^wdt:${substructureOfPID}* wd:${structureId}.
-        ?st${i} pq:${morphologyStatementCharacterPID}/^wdt:${subcharacterOfPID}* wd:${characterId}.
-        ?st${i} pq:${morphologyStatementValuePID} ?values_${i}.
-        ?st${i} pq:${morphologyStatementValuePID} ?value${i};
-            pq:${morphologyStatementStructurePID} ?relatedStructure${i};
-            pq:${morphologyStatementCharacterPID} ?relatedCharacter${i}.
-        ?st${i} ^p:${morphologyStatementPID} ?taxon.
+        ?st${i} pq:${getPID("taxon/morphology statement structure")}/^wdt:${getPID("core/substructure of")}* wd:${structureId}.
+        ?st${i} pq:${getPID("taxon/morphology statement character")}/^wdt:${getPID('core/subcharacter of')}* wd:${characterId}.
+        ?st${i} pq:${getPID("taxon/morphology statement value")} ?values_${i}.
+        ?st${i} pq:${getPID("taxon/morphology statement value")} ?value${i};
+            pq:${getPID("taxon/morphology statement structure")} ?relatedStructure${i};
+            pq:${getPID("taxon/morphology statement character")} ?relatedCharacter${i}.
  
         OPTIONAL {
-          ?st${i} prov:wasDerivedFrom/pr:${provenancePID} ?provenance${i} .
+          ?st${i} prov:wasDerivedFrom/pr:${getPID("code/provenance")} ?provenance${i} .
         }
         `).join("\n\n"))}
-        OPTIONAL { ?taxon wdt:${parentTaxonPID} ?parentTaxon }
+        OPTIONAL { ?taxon wdt:${getPID("taxon/parent taxon")} ?parentTaxon }
       }
       ORDER BY ASC(?taxonLabel) LIMIT 100`);
-    return await fetch(url).then(async response => {
+    return await fetch(`${url}${queryOptions.breakCache ? '&nocache=true' : ''}`).then(async response => {
       if (response.status !== 200) {
         throw new Error("Query failed");
       }
@@ -377,21 +428,21 @@ export default function makeActions (wbApi) {
       WHERE {
         SERVICE wikibase:label {bd:serviceParam wikibase:language "en" }
         VALUES ?values {${values.map(v => `"${v}"`).join(' ')}}
-        ?taxon wdt:${taxonRankPID} ?rank.
-        ?taxon p:${morphologyStatementPID}  ?st.
+        ?taxon wdt:${getPID("taxon/rank")} ?rank.
+        ?taxon p:${getPID("taxon/morphology statement")}  ?st.
 
-        ?st pq:${morphologyStatementStructurePID} ?superStructure.
-        ?superStructure wdt:${substructureOfPID}* wd:${structureId}.
+        ?st pq:${getPID("taxon/morphology statement structure")} ?superStructure.
+        ?superStructure wdt:${getPID("core/substructure of")}* wd:${structureId}.
         hint:Prior hint:gearing "forward".
 
-        ?st pq:${morphologyStatementCharacterPID} ?superCharacter.
-        ?superCharacter wdt:${subcharacterOfPID}* wd:${characterId}.
+        ?st pq:${getPID("taxon/morphology statement character")} ?superCharacter.
+        ?superCharacter wdt:${getPID('core/subcharacter of')}* wd:${characterId}.
         hint:Prior hint:gearing "forward".
 
-        ?st pq:${morphologyStatementValuePID} ?values.
-        ?st pq:${morphologyStatementValuePID} ?value.
+        ?st pq:${getPID("taxon/morphology statement value")} ?values.
+        ?st pq:${getPID("taxon/morphology statement value")} ?value.
         
-        OPTIONAL { ?taxon wdt:${parentTaxonPID} ?parentTaxon }
+        OPTIONAL { ?taxon wdt:${getPID("taxon/parent taxon")} ?parentTaxon }
         OPTIONAL {
           ?st prov:wasDerivedFrom _:ref .
           _:ref pr:P12 ?provenance .
@@ -429,9 +480,9 @@ export default function makeActions (wbApi) {
   async function getAllValuesForStructureAndCharacter (structureId, characterId) {
     const url = wbApi.sparqlQuery(`
      SELECT DISTINCT ?value WHERE {
-      _:st pq:${morphologyStatementValuePID} ?value.
-      _:st pq:${morphologyStatementStructurePID}/^wdt:${substructureOfPID}* wd:${structureId}.
-      _:st pq:${morphologyStatementCharacterPID}/^wdt:${subcharacterOfPID}* wd:${characterId}.
+      _:st pq:${getPID("taxon/morphology statement value")} ?value.
+      _:st pq:${getPID("taxon/morphology statement structure")}/^wdt:${getPID("core/substructure of")}* wd:${structureId}.
+      _:st pq:${getPID("taxon/morphology statement character")}/^wdt:${getPID('core/subcharacter of')}* wd:${characterId}.
     } 
     ORDER BY ASC(?value)
      `);
@@ -447,42 +498,12 @@ export default function makeActions (wbApi) {
     });
   }
 
-  async function getTaxonById (taxonId) {
-    const url = wbApi.sparqlQuery(`
-    SELECT ?name ?family ?familyLabel ?rank ?rankLabel ?parentTaxon ?parentTaxonLabel ?commonName ?taxonId ?taxonAuthority ?taxonRank ?taxonRankLabel WHERE {
-      BIND(<http://wikibase.svc/entity/${taxonId}> AS ?taxon)
-      ?taxon wdt:${taxonNamePID} ?name;
-             wdt:${taxonRankPID} ?rank.
-      OPTIONAL {
-        ?taxon wdt:${taxonFamilyPID} ?family;
-      }
-      OPTIONAL { 
-        ?taxon wdt:${parentTaxonPID} ?parentTaxon.
-      } 
-      OPTIONAL {
-        ?taxon wdt:${commonNamePID} ?commonName
-      }
-      OPTIONAL {
-        ?taxon p:${acceptedIdPID} _:b1.
-        _:b1 ps:${acceptedIdPID} ?taxonId;
-             pq:${taxonAuthorityPID} ?taxonAuthority;
-             pq:${taxonRankPID} ?taxonRank.
-      }
-      SERVICE wikibase:label { bd:serviceParam wikibase:language "en". }
-    }`);
-    return await fetch(url).then(async response => {
-      const data = wbApi.simplify.sparqlResults(await response.json());
-      console.log('Taxon', data)
-      return data;
-    }).catch(err => {
-      console.error(err);
-    });
-  }
+
 
   async function searchTaxaByName (partialTaxonName) {
     const url = wbApi.sparqlQuery(`SELECT ?taxon ?taxonName{
-      ?taxon wdt:${instanceOfPID} "taxon".
-      ?taxon wdt:${taxonNamePID} ?taxonName.
+      ?taxon wdt:${getPID('core/instance of')} "taxon".
+      ?taxon wdt:${getPID("taxon/name")} ?taxonName.
       BIND (STRLEN(?taxonName) AS ?strlen)
       FILTER (REGEX(?taxonName, "${partialTaxonName}", "i"))
     } ORDER BY ASC(?strlen) ASC(?taxonName) LIMIT 20 `);
@@ -497,9 +518,9 @@ export default function makeActions (wbApi) {
 
   async function getTaxaNamesOfRank (rankName) {
     const url = wbApi.sparqlQuery(`SELECT ?taxon ?taxonName{
-      ?rank wdt:${fcUIDPID} "taxon/rank/${rankName}".
-      ?taxon wdt:${taxonRankPID} ?rank;
-             wdt:${taxonNamePID} ?taxonName.
+      ?rank wdt:${getPID('fc-uid')} "taxon/rank/${rankName}".
+      ?taxon wdt:${getPID("taxon/rank")} ?rank;
+             wdt:${getPID("taxon/name")} ?taxonName.
   } ORDER BY ASC(?taxonName)`);
     return await fetch(url).then(async response => {
       const data = wbApi.simplify.sparqlResults(await response.json());
@@ -530,6 +551,10 @@ export default function makeActions (wbApi) {
     });
   }
 
+  const actions = {
+    addClaimLabels,
+  }
+
   return {
     getTopLevelStructures,
     // getSecondLevelStructures,
@@ -541,7 +566,9 @@ export default function makeActions (wbApi) {
     // getAllCharactersForStructure,
     getAllValuesForStructureAndCharacter,
     getTaxaWithFacets,
-    getTaxonById,
+    fetchTaxonById,
+    fetchAllEntityProvenances,
+    addClaimLabels,
     searchTaxaByName,
     getTaxaNamesOfRank,
     getCommonDistributionValues,

@@ -4,6 +4,6 @@ export const fcEndpoint = {
 }
 
 export const wikidataEndpoint = {
-  instance: 'http://wikidata.org',
-  sparqlEndpoint: 'http://query.wikidata.org/sparql'
+  instance: 'https://wikidata.org',
+  sparqlEndpoint: 'https://query.wikidata.org/sparql'
 }

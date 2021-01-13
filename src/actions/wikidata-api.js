@@ -1,3 +1,5 @@
+import {wdApi} from "./_init";
+
 export default (wikidata) => {
 
   async function getWikiDataImagesForTaxa (taxaNames) {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useHistory, useLocation } from "react-router-dom";
 import styled from "styled-components";  
-import { Header, Button, Icon, Dropdown, List, Placeholder, Loader, Label, Input, Card, Image } from "semantic-ui-react";
+import { Header, Button, Icon, Dropdown, List, Placeholder, Loader, Label, Input, Card, Image, Form, Checkbox } from "semantic-ui-react";
 import { FillBox, ScrollingFillBox } from "components/ui/Box";
 
 import FacetRow from "./facet-row";
@@ -149,6 +149,12 @@ const DistributionFacet = ({loading, values, selectedValues, onChange}) => {
     onChange={onChange}
     multiple={true}
   />) 
+} 
+
+const CacheBreakerPref = ({onChange, checked}) => {
+  return (<Form.Field>
+    <Checkbox toggle label="Avoid Query Cache" onChange={onChange} />
+  </Form.Field>)
 }
 
 
@@ -195,6 +201,8 @@ function FacetedSearch({actions}) {
 
   const [distributionValues, setDistributionValues] = useState([]);
   const [selectedDistributionValues, setSelectedDistributionValues] = useState([]);
+
+  const [queryOptions, setQueryOptions] = useState({breakCache: false});
 
 
   // load structure list on component mount, don't re-run for renders
@@ -259,16 +267,19 @@ function FacetedSearch({actions}) {
       newFacets = facets;
     }
     try {
-      const taxa = await getTaxaWithFacets(newMorphFacetRows, newFacets);
+      const taxa = await getTaxaWithFacets(newMorphFacetRows, newFacets, queryOptions);
       console.log(taxa);
       setTaxaResults(taxa);
       if (taxa.length) {
+        setFetchingTaxa(false);
         setFetchingTaxaImages(true);
         const taxaImages = await getWikiDataImagesForTaxa(taxa.map(row => row.taxon.label));
         setTaxaImages(taxaImages);
         setFetchingTaxaImages(false);
+      } else {
+        setFetchingTaxa(false);
+        // display no results message
       }
-      setFetchingTaxa(false);
     } catch (e) {
       setFetchingTaxa(false);
     }
@@ -327,6 +338,15 @@ function FacetedSearch({actions}) {
     updateFacets({distribution: values})
     setSelectedDistributionValues(values);
   }
+
+  const handleCacheBreakerChange = () => {
+    setQueryOptions(
+      {
+        ...queryOptions,
+        breakCache: !queryOptions.breakCache
+      }
+    )
+  }
   // const persistFacetsToURL = (facetRows) => {
   //   const filterIncomplete = ([type, data]) => type && data.length > 0;
   //   if (facetRows.length < 1 || !facetRows.filter(filterIncomplete)?.length) {
@@ -364,7 +384,8 @@ function FacetedSearch({actions}) {
         <FamilyFacet onChange={handleFamilyChange} selectedValues={selectedFamilyValues} values={familyValues} loading={!isInitialised} />
         <TaxonRankFacet onChange={handleRankChange} selectedValues={selectedRankValues} loading={!isInitialised} />
         <DistributionFacet onChange={handleDistributionChange} selectedValues={selectedDistributionValues} values={distributionValues} loading={!isInitialised} />
-
+        <hr />
+        <CacheBreakerPref onChange={handleCacheBreakerChange} />
       </SimpleFacets>
       <FacetBuilder>
         <Header as="h3">Morphology</Header>

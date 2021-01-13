@@ -4,21 +4,19 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@babel/core": "^7.12.3",
-    "@babel/node": "^7.12.1",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",
     "can-ndjson-stream": "^1.0.2",
     "dotenv": "^8.2.0",
     "greenlet": "^1.1.0",
-    "grommet": "^2.12.0",
     "grommet-icons": "^4.4.0",
     "lodash": "^4.17.20",
     "node-fetch": "^2.6.1",
     "polished": "^3.5.1",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
+    "react-helmet": "^6.1.0",
     "react-list": "^0.8.13",
     "react-router-dom": "^5.1.2",
     "react-scripts": "3.4.1",
@@ -32,7 +30,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "prebuild": "npx babel-node src/precache/index.js"
+    "prebuild": "npx babel-node src/precache/_pre-precache.js && npx babel-node src/precache/index.js"
   },
   "eslintConfig": {
     "extends": "react-app"
@@ -47,6 +45,26 @@
       "last 1 chrome version",
       "last 1 firefox version",
       "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.12.10",
+    "@babel/core": "^7.12.10",
+    "@babel/node": "^7.12.1",
+    "@babel/preset-env": "^7.12.11",
+    "babel-plugin-module-resolver": "^4.1.0"
+  },
+  "babel": {
+    "plugins": [
+      [
+        "module-resolver",
+        {
+          "root": [
+            "src"
+          ],
+          "cwd": "packagejson"
+        }
+      ]
     ]
   }
 }
