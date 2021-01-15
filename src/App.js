@@ -11,17 +11,19 @@ import {
 import {Helmet} from "react-helmet";
 import { Segment, Dimmer, Loader, Image, Menu, Modal, Input, Icon } from "semantic-ui-react";
 import styled, { css } from "styled-components";
-import actions from "actions";
 import { Main, Box, FillBox } from "components/ui/Box";
 import theme from "./theme";
 import "semantic-ui-css/semantic.min.css";
 
-import HeaderSearch from "components/taxon-name-search";
+import actions from "./actions/index.js";
 
+import HeaderSearch from "components/taxon-name-search";
+import LayoutWidth from "components/layout-width";
 import Home from "pages/Home";
 import StructureCharacterSearch from "pages/structure-character";
 import FacetedSearch from "pages/faceted-search";
 import Taxon from "pages/taxon";
+import TaxonHierarchy from "pages/hierarchy";
 
 
 
@@ -36,23 +38,26 @@ const AppGrid = styled.div`
 
 const AppHeader = styled.header`
   grid-area: header;
+
+  /* border-bottom: 2px solid #ccc; */
+  background: #b5d8a3;
+
+  /* @media only screen and (min-width: 1400px) {
+    width: 1200px;
+  } */
+`;
+
+const HeaderLayoutWidth = styled(LayoutWidth)`
   display: flex;
   justify-content: center;
-  
   padding: 10px 10px 0 10px;
-  border-bottom: 2px solid #ccc;
-  background: #fff;
 `;
 
 const AppMain = styled.main`
   grid-area: main;
   display: flex;
   justify-self: center;
-  width: 95%;
-
-  @media only screen and (min-width: 1400px) {
-    width: 1200px;
-  }
+  width: 100vw;
 `;
 
 const AppTitle =  styled.h1`
@@ -70,11 +75,7 @@ const HeaderNav = styled.nav`
   display: flex;
   flex-direction: row;
   justify-self: center;
-  width: 95%;
-
-  @media only screen and (min-width: 1400px) {
-    width: 1200px;
-  }
+  flex: 1;
 `;
 
 const BaseNavItem = styled(NavLink)`
@@ -111,18 +112,23 @@ function App() {
       </Helmet>
       <AppGrid>
         <AppHeader gridArea="header">
-          <AppTitle>Flora Commons</AppTitle>
-          <HeaderNav direction="row">
-            <NavItem to="/" exact>
-              <Icon name="home" />Home
-            </NavItem>
-            <NavItem to="/faceted-search" >
-              <Icon name="search" />Faceted Search
-            </NavItem>
-          </HeaderNav>
-          <AppSearch>
-            <HeaderSearch actions={actions} />
-          </AppSearch>
+          <HeaderLayoutWidth>
+            <AppTitle>Flora Commons</AppTitle>
+            <HeaderNav direction="row">
+              <NavItem to="/" exact>
+                <Icon name="home" />Home
+              </NavItem>
+              <NavItem to="/faceted-search" >
+                <Icon name="search" />Faceted Search
+              </NavItem>
+              <NavItem to="/taxon-hierarchy" >
+                <Icon name="tree" />Hierarchy
+              </NavItem>
+            </HeaderNav>
+            <AppSearch>
+              <HeaderSearch actions={actions} />
+            </AppSearch>
+          </HeaderLayoutWidth>
         </AppHeader>
         <AppMain gridArea="main">
           {isFetching && (
@@ -143,6 +149,10 @@ function App() {
               />
               <Route path="/faceted-search" children={() => (
                 <FacetedSearch actions={actions} />
+              )}
+              />
+              <Route path="/taxon-hierarchy" children={() => (
+                <TaxonHierarchy actions={actions} />
               )}
               />
               <Route path="/taxon/:id">

@@ -12,6 +12,8 @@ export default function EntityLabel ({id, children}) {
       fetchEntityLabel(id).then(label => {
         setLabel(label);
         setLoaded(true);
+      }).catch(e => {
+        setLabel(id);
       });
     } else {
       

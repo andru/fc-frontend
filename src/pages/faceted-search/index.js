@@ -4,6 +4,8 @@ import styled from "styled-components";
 import { Header, Button, Icon, Dropdown, List, Placeholder, Loader, Label, Input, Card, Image, Form, Checkbox } from "semantic-ui-react";
 import { FillBox, ScrollingFillBox } from "components/ui/Box";
 
+import LayoutWidth from "components/layout-width";
+import { getTaxaWithFacets } from "actions/floracommons/taxa-facets";
 import FacetRow from "./facet-row";
 import ValueDropdownFacet from "./facet-creators/value-dropdown";
 
@@ -74,13 +76,15 @@ const TaxonResult = styled(({className, children, ...props}) => (
 
 const TaxaPlaceholder = styled(({className, children, ...props}) => (
   <Placeholder fluid className={className}>
-    {new Array(20).fill(true).map(a => (<Placeholder.Header>
+    {new Array(20).fill(true).map((a, i) => (<Placeholder.Header key={i}>
       <Placeholder.Line />
       <Placeholder.Line />
     </Placeholder.Header>))}
   </Placeholder>
 ))`
 `;
+
+const ErrorContainer = styled.div``;
 
 
 // const AddFacetButton = styled(Button)``;
@@ -162,11 +166,8 @@ const allStructures = [];
 const allCharacters = [];
 let structureCharacters = {};
 
-function FacetedSearch({actions}) {
+export default function FacetedSearch({actions}) {
   const {
-    getTopLevelStructures,
-    getTopLevelCharacters,
-    getTaxaWithFacets,
     getWikiDataImagesForTaxa,
     getTaxaNamesOfRank,
   } = actions;
@@ -183,6 +184,7 @@ function FacetedSearch({actions}) {
   // doIt();
   const [isInitialised, setInitialised] = useState(false);
   const [isFetchingTaxa, setFetchingTaxa] = useState(false);
+  const [isError, setError] = useState(false);
   const [taxaResults, setTaxaResults] = useState([]);
   const [isFetchingTaxaImages, setFetchingTaxaImages] = useState(true);
   const [taxaImages, setTaxaImages] = useState({});
@@ -281,7 +283,9 @@ function FacetedSearch({actions}) {
         // display no results message
       }
     } catch (e) {
+      console.error(e);
       setFetchingTaxa(false);
+      setError(true);
     }
   }
 
@@ -377,9 +381,8 @@ function FacetedSearch({actions}) {
   // }
 
 
-
   return (
-    <Container>
+    <LayoutWidth><Container>
       <SimpleFacets>
         <FamilyFacet onChange={handleFamilyChange} selectedValues={selectedFamilyValues} values={familyValues} loading={!isInitialised} />
         <TaxonRankFacet onChange={handleRankChange} selectedValues={selectedRankValues} loading={!isInitialised} />
@@ -406,45 +409,55 @@ function FacetedSearch({actions}) {
         ))}
         <AddFacetButton onClick={handleAddFacetClick} />
       </FacetBuilder>
-
-      <ResultsContainer>
-        <TaxaResultsContainer>
-          {isFetchingTaxa ? 
-          <TaxaPlaceholder /> : ''}
-          {!isFetchingTaxa && taxaResults?.length ? <TaxaResults>
-            <Card.Group>
-            {taxaResults.map(({taxon, parentTaxon, rank, morphHits, simpleHits}) => (
-               <Card key={taxon.value} link href={`/taxon/${taxon.value}`}>
-                  {isFetchingTaxaImages
-                    ? <Placeholder>
-                        <Placeholder.Image square />
-                      </Placeholder>
-                    : taxaImages[taxon.label]
-                      ? <TaxonImage imageUrl={taxaImages[taxon.label]} />
-                      : <NoTaxonImage />
-                  }
-                  <Card.Content>
-                    <Card.Header>{taxon.label}</Card.Header>
-                    {parentTaxon && <Card.Meta>{parentTaxon.label}</Card.Meta>}
-                    <Card.Description>
-                      {simpleHits.morphology?.length ? <div>Distribution <b>{simpleHits.distribution.join(', ')}</b></div> : null}
-                      {morphHits.map(hit => (<div>
-                        {hit.relatedStructure.label} {hit.relatedCharacter.label} <b>{hit.value}</b><br />
-                        {/* {hit.provenance.label} */}
-                      </div>))}
-                    </Card.Description>
-                  </Card.Content>
-                </Card>
-            )) }
-            </Card.Group>
-            </TaxaResults>
-          : ''}
-        </TaxaResultsContainer>
-
-    </ResultsContainer>
-
-    </Container>
+      {isError
+        ? <ErrorContainer>Oops! Something went wrong.</ErrorContainer>
+        : <Results {...{isFetchingTaxa, taxaResults, isFetchingTaxaImages, taxaImages}} />
+      }
+    </Container></LayoutWidth>
   );
 }
 
-export default FacetedSearch;
+function Results (props) {
+  const {
+    isFetchingTaxa,
+    taxaResults,
+    isFetchingTaxaImages,
+    taxaImages
+  } = props;
+  return (
+  <ResultsContainer>
+    <TaxaResultsContainer>
+      {isFetchingTaxa ? 
+      <TaxaPlaceholder /> : ''}
+      {!isFetchingTaxa && taxaResults?.length ? <TaxaResults>
+        <Card.Group>
+        {taxaResults.map(({taxon, parentTaxon, rank, morphHits, simpleHits}) => (
+           <Card key={taxon.value} link href={`/taxon/${taxon.value}`}>
+              {isFetchingTaxaImages
+                ? <Placeholder>
+                    <Placeholder.Image square />
+                  </Placeholder>
+                : taxaImages[taxon.label]
+                  ? <TaxonImage imageUrl={taxaImages[taxon.label]} />
+                  : <NoTaxonImage />
+              }
+              <Card.Content>
+                <Card.Header>{taxon.label}</Card.Header>
+                {parentTaxon && <Card.Meta>{parentTaxon.label}</Card.Meta>}
+                <Card.Description>
+                  {simpleHits.morphology?.length ? <div>Distribution <b>{simpleHits.distribution.join(', ')}</b></div> : null}
+                  {morphHits.map(hit => (<div>
+                    {hit.relatedStructure.label} {hit.relatedCharacter.label} <b>{hit.value}</b><br />
+                    {/* {hit.provenance.label} */}
+                  </div>))}
+                </Card.Description>
+              </Card.Content>
+            </Card>
+        )) }
+        </Card.Group>
+        </TaxaResults>
+      : ''}
+    </TaxaResultsContainer>
+
+</ResultsContainer>)
+}

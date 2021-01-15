@@ -132,8 +132,6 @@ let structureCharacters = {};
 
 function StructureCharacterSearch({actions}) {
   const {
-    getTopLevelStructures,
-    getTopLevelCharacters,
     getTaxaWithFacets,
     getWikiDataImagesForTaxa
   } = actions;

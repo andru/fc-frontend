@@ -4,6 +4,7 @@ import EntityLabel from "components/wikibase-entity-label";
 import {getClaimProvenances} from "actions/floracommons/provenance";
 
 const Container = styled.ul`
+  display: inline;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -36,7 +37,8 @@ const Ref = styled.span`
 export default function InlineProvenance (props) {
   const {
     claims,
-    hideProvenances,
+    hideProvenances = [],
+    showToken = true,
     children
   } = props;
 
@@ -47,24 +49,24 @@ export default function InlineProvenance (props) {
     //  hide claim if all provenances are hidden
     const allProvsHidden = provs.reduce((hide, prov) => hide && hideProvenances.indexOf(prov.id) > -1, true);
     return !allProvsHidden;
-  }).map(claim => <RenderComp claim={claim} key={claim.id} hideProvenances={hideProvenances} />)}</Container>)
+  }).map(claim => <RenderComp claim={claim} key={claim.id} hideProvenances={hideProvenances} showToken={showToken} />)}</Container>)
 }
 
 export function InlineProvenanceClaim (props) {
-  const {claim, hideProvenances} = props;
+  const {claim, hideProvenances, showToken} = props;
   const provenances = getClaimProvenances(claim).filter(prov => hideProvenances.indexOf(prov.id) < 0);
   switch(claim?.mainsnak?.datatype) {
     case 'wikibase-item':
       return <ClaimContainer>
         <Label><EntityLabel id={claim?.mainsnak?.datavalue?.value?.id} /></Label>
-        {provenances.map(prov => <Ref key={prov.id}>{prov.id}</Ref>)}
+        {!showToken || provenances.map(prov => <Ref key={prov.id}>{prov.id}</Ref>)}
       </ClaimContainer>
     case 'quantity':
     case 'string':
     default:
       return <ClaimContainer>
         <Label>{claim?.mainsnak?.datavalue?.value}</Label>
-        {provenances.map(prov => <Ref key={prov.id}>{prov.id}</Ref>)}
+        {!showToken || provenances.map(prov => <Ref key={prov.id}>{prov.id}</Ref>)}
       </ClaimContainer>
   }
 }
