@@ -24,7 +24,6 @@ const writeFile = util.promisify(fs.writeFile);
   const wbApi = wikibaseSDK(fcEndpoint);
   
   console.log(`Caching core PID values`)
-  // const dist = await getCommonDistributionValues();
 
   const fcUidQueryUrl = wbApi.sparqlQuery(`
   SELECT ?propertyLabel ?property WHERE {

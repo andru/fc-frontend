@@ -1,5 +1,5 @@
-import {wbApi} from "../_init";
-import { getPID, getUID } from "./pid-uid";
+import {wbApi} from "../_init.js";
+import { getPID, getUID } from "./pid-uid.js";
 
 export async function fetchAllEntityProvenances(id) {
   const url = wbApi.sparqlQuery(`SELECT DISTINCT ?ref ?refLabel {

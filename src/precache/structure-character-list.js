@@ -3,7 +3,8 @@ import fs from "fs";
 import path from "path";
 
 import wikibaseSDK from "wikibase-sdk";
-import makeWikibaseApiActions from "../actions/wikibase-api.js";
+import { getPID, getUID } from "../actions/floracommons/pid-uid.js";
+import { getTopLevelStructures, getTopLevelCharacters, getTopLevelCharactersOfStructure } from "../actions/floracommons/morphology.js";
 
 const writeFile = util.promisify(fs.writeFile);
 
@@ -15,23 +16,13 @@ export default async function fetchAndCache () {
     sparqlEndpoint: process.env.REACT_APP_SPARQL || 'http://localhost:8989/bigdata/sparql', 
   }
   const wbApi = wikibaseSDK(fcEndpoint);
-  const { getTopLevelStructures, getTopLevelCharacters, getTopLevelCharactersOfStructure } = makeWikibaseApiActions(wbApi);
   
 
   console.log('Querying wikibase and pre-caching structure & character lists')
   const allStructures = await fetchStructures();
   const allCharacters = await fetchCharacters();
   // a map of structure ids to an array of character ids
-  const structuresWithCharacters = {};
-
-  for (const structure of allStructures) {
-    console.log(`Fetching characters related to structure ${structure.label}`)
-    const characters = await fetchCharactersOfStructure(structure.id);
-    // if there are characters associated with the structure, add it to the list
-    if (characters.length > 0) {
-      structuresWithCharacters[structure.id] = characters.map(character => character.id);
-    }
-  }
+  const structuresWithCharacters = await fetchStructureCharacters();
 
   const cachedResults = {
     structureToCharacters: structuresWithCharacters,
@@ -70,14 +61,47 @@ export default async function fetchAndCache () {
     }
   }
   
-  async function fetchCharactersOfStructure (structureId) {
-    const data = await getTopLevelCharactersOfStructure(structureId);
+  async function fetchStructureCharacters () {
+
+    const url = wbApi.sparqlQuery(`# 
+    SELECT DISTINCT ?structure ?structureLabel ?character ?characterLabel WHERE {
+      ?structure wdt:${getPID('core/instance of')} "plant structure".
+      ?structure rdfs:label ?structureLabel.
+
+      FILTER( NOT EXISTS {
+        ?structure wdt:${getPID("core/substructure of")} ?noStrParent.
+      })
+      
+      ?structure wdt:${getPID("core/related character")} ?character
+                 
+      FILTER( NOT EXISTS {
+        ?character wdt:${getPID('core/subcharacter of')} ?noCharParent.
+      })
+      ?character rdfs:label ?characterLabel.
+    }
+    ORDER BY ASC(?characterLabel)
+`);
+
+  const data = await fetch(url).then(async response => {
+    const data = wbApi.simplify.sparqlResults(await response.json());
+    /* {
+      character: Object { value: "PID", label: "String" }
+      superStructure: "PID"
+    } */
+    // console.log('getTopLevelCharacters', data)
+    return data;//.map(row => row.character);
+  }).catch(err => {
+    console.error(err);
+  });
   
     if (data) {
-      return data.map(row => ({
-        id: row.character.value,
-        label: row.character.label
-      }))
+      return data.reduce((groups, row) => {
+        if (!groups[row.structure.value]) {
+          groups[row.structure.value] = [];
+        }
+        groups[row.structure.value].push(row.character.value)
+        return groups;
+      }, {})
     } else {
       throw new Error('Oops no characters');
     }

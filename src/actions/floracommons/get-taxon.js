@@ -1,6 +1,6 @@
-import {wbApi} from "../_init";
-import { getPID, getUID } from "./pid-uid";
-import { getClaimProvenances } from "./provenance";
+import {wbApi} from "../_init.js";
+import { getPID, getUID } from "./pid-uid.js";
+import { getClaimProvenances } from "./provenance.js";
 
 export async function fetchTaxonById (taxonId) {
   // const url = wbApi.sparqlQuery(`
@@ -171,12 +171,21 @@ async function normaliseResult (json) {
   }
 }
 
-export function fetchTaxonHierarchy (taxonId) {
-  const query = `select ?sub ?sup (count(?mid)-1 as ?distance) where { 
-    VALUES ?sub {wd:Q900}
-    ?sub wdt:P19* ?mid .
-    ?mid wdt:P19* ?sup .
+export async function getCommonDistributionValues () {
+  const url = wbApi.sparqlQuery(`SELECT ?dist (COUNT(?dist) AS ?count)
+  WHERE 
+  {
+     ?taxon wdt:${getPID('taxon/distribution')} ?dist.
   }
-  group by ?sub ?sup
-  order by ?sub ?sup`
+  GROUP BY ?dist
+  HAVING(?count > 100)
+  ORDER BY DESC(?count)`);
+  return await fetch(url).then(async response => {
+    const data = wbApi.simplify.sparqlResults(await response.json());
+    // return data.map(row => ({name: row.dist}))
+    // console.log(``, data)
+    return data.map(row => row.dist).sort();
+  }).catch(err => {
+    console.error(err);
+  });
 }
