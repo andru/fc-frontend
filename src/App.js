@@ -25,6 +25,7 @@ import FacetedSearch from "pages/faceted-search";
 import Taxon from "pages/taxon";
 import TaxonHierarchy from "pages/hierarchy";
 
+import MapTest from "pages/MapTest";
 
 
 const AppGrid = styled.div`
@@ -124,6 +125,9 @@ function App() {
               <NavItem to="/taxon-hierarchy" >
                 <Icon name="tree" />Hierarchy
               </NavItem>
+              <NavItem to="/map-test" >
+                <Icon name="map" />Map Test
+              </NavItem>
             </HeaderNav>
             <AppSearch>
               <HeaderSearch actions={actions} />
@@ -158,6 +162,11 @@ function App() {
               <Route path="/taxon/:id">
                 <Taxon actions={actions} />
               </Route>
+
+              <Route path="/map-test" children={() => (
+                <MapTest actions={actions} />
+              )}
+              />
             </Switch>
         </AppMain>
       </AppGrid>

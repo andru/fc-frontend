@@ -20,8 +20,9 @@ const Warning = styled.p`
 function Home({actions}) {
   return (
     <Container>
+      <LayoutWidth>
       <Intro>Welcome to <em>Flora Commons</em>.</Intro>
-      <Warning>This front-end UI is backed by a Flora Commons <a href="http://159.89.116.92" target="_blank">wikibase installation</a> and <a href="http://159.89.116.92:8282/">sparql endpoint</a>. <br />
+      <Warning>This front-end UI is backed by a Flora Commons <a href={`${fcEndpoint.instance}/wiki`} target="_blank" rel="noreferrer">wikibase installation</a> and <a href={`${fcEndpoint.sparqlEndpoint}`}>sparql endpoint</a>. <br />
       All aspects of this system are under heavy active development and are not yet stable or feature complete.
       </Warning>
       <h4>Imported Datasets</h4>
