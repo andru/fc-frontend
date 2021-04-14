@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { Dropdown, List, Placeholder, Loader, Label } from "semantic-ui-react";
 import { FillBox, ScrollingFillBox } from "components/ui/Box";
+import LayoutWidth from 'components/layout-width'
+import {fcEndpoint} from 'constants/endpoints' 
 
 const Container = styled(FillBox)`
   padding: 20px;
@@ -57,6 +59,7 @@ function Home({actions}) {
         </li>
         <li>Taxonomic hierarchy navigation / visualisation</li>
       </ul>
+      </LayoutWidth>
     </Container>
   );
 }
