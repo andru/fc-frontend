@@ -36,7 +36,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "prebuild": "npx babel-node src/precache/_pre-precache.js && npx babel-node src/precache/index.js"
+    "prebuild": "npx babel-node -r dotenv/config src/precache/_pre-precache.js && npx babel-node -r dotenv/config src/precache/index.js"
   },
   "eslintConfig": {
     "extends": "react-app"
