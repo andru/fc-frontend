@@ -68,6 +68,10 @@ const AppTitle =  styled.h1`
   font-size: 1.4em;
   white-space: nowrap;
   margin: 0 20px 0 0;
+
+  a {
+    color: #333;
+  }
 `;
 
 const ModuleTitle =  styled.h1`
@@ -76,6 +80,10 @@ const ModuleTitle =  styled.h1`
   margin: 0 20px 0 20px;
   flex: 1 0 auto;
   text-align: center;
+
+  a {
+    color: #333;
+  }
 `;
 
 const AppSearch = styled.div`
@@ -152,8 +160,8 @@ function App() {
       <AppGrid>
         <AppHeader gridArea="header">
           <HeaderLayoutWidth>
-            <AppTitle>CFC</AppTitle>
-            <ModuleTitle>My Neighbourhood Flora</ModuleTitle>
+            <AppTitle><Link to="/">CFC</Link></AppTitle>
+            <ModuleTitle><Link to="/my-neighbourhood-flora">My Neighbourhood Flora</Link></ModuleTitle>
             {/* <HeaderNav direction="row">
               <NavItem to="/" exact>
                 <Icon name="home" />Home

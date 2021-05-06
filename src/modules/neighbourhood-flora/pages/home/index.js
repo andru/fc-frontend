@@ -15,7 +15,10 @@ const Container = styled.div`
 
 `;
 
-const TaxonCount = styled(LayoutWidth)``;
+const TaxonCount = styled(LayoutWidth)`
+  text-align: center;
+  padding-top: 20px;
+`;
 
 const defaultCoords = [45.3950098, -75.7168519];
 const defaultZoom = 12;
@@ -44,16 +47,6 @@ function NeighbourhoodHome (props) {
   const totalOccurrences = taxa ? taxa.reduce((sum, taxon) => sum + taxon?.occurrences ?? 0, 0) : 0;
 
   return (<Container>
-    <LayoutWidth>
-      <div>Wecome to My Neighbourhood Flora</div>
-      {locationPermissionStatus === 'prompt'
-        && <div><button onClick={()=>getLocation()}>Find My Neighbourhood</button></div>
-      }
-      {locationPermissionStatus === 'granted' && !location && <div>Finding your location...</div>}
-      {location && <div>{location[0]}, {location[1]}</div>}
-      {hasLocationError !== 0 && <div>Location Error</div>}
-    </LayoutWidth>
-
     <MapContainer center={location ? location : defaultCoords} zoom={defaultZoom} scrollWheelZoom={false} style={{height:900, width:'100vw'}} maxZoom={maxZoom} minZoom={minZoom} whenCreated={setMap}>
 
             <TileLayer
@@ -65,7 +58,17 @@ function NeighbourhoodHome (props) {
 
       </MapContainer>
 
-      <TaxonCount>{isLoadingTaxa ? <>Loading...</> :  <>There {totalOccurrences} recorded sightings of {taxa.length} plants in this neighbourhood.</>}</TaxonCount>
+      <TaxonCount>{isLoadingTaxa ? <>Loading...</> :  <h2>There {totalOccurrences} recorded sightings of {taxa.length} plants in this neighbourhood.</h2>}</TaxonCount>
+
+      <LayoutWidth>
+      {locationPermissionStatus === 'prompt'
+        && <div><button onClick={()=>getLocation()}>Find My Neighbourhood</button></div>
+      }
+      {locationPermissionStatus === 'granted' && !location && <div>Finding your location...</div>}
+      {/* {location && <div>{location[0]}, {location[1]}</div>} */}
+      {hasLocationError !== 0 && <div>Location Error: GeoLocation API unavailable over insecure connection</div>}
+    </LayoutWidth>
+
 
   </Container>)
 }

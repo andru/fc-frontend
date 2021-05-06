@@ -27,19 +27,22 @@ function Home({actions}) {
       <Warning>This front-end UI is backed by a Flora Commons <a href={`${fcEndpoint.instance}/wiki`} target="_blank" rel="noreferrer">wikibase installation</a> and <a href={`${fcEndpoint.sparqlEndpoint}`}>sparql endpoint</a>. <br />
       All aspects of this system are under heavy active development and are not yet stable or feature complete.
       </Warning>
+      <p>
+        For a list of all taxa in this demo, see the <Link to="/taxon-hierarchy">Taxon Hierarchy</Link>
+      </p>
       <h4>Imported Datasets</h4>
       <ul>
-        <li>Flora of North America, Volumes 19, 20 &amp; 21</li>
+        <li>Flora of North America [only Volumes 19, 20 &amp; 21 present in this demo]</li>
+        <li>GBIF taxon keys</li>
+        <li>Flora of BC [not present in this demo]</li>
       </ul>
       <h4>Datasets Planned for Import</h4>
       <ul>
         <li>Additional Volumes of the Flora of North America</li>
-        <li>Flora of BC</li>
       </ul>
       <h4>Linked External Data Sources</h4>
       <ul>
         <li>Taxa present at WikiData (not yet implemented)</li>
-        <li>GBIF (not yet implemented)</li>
         <li>EOL (not yet implemented)</li>
         <li>USDA PLANTS (not yet implemented)</li>
       </ul>
