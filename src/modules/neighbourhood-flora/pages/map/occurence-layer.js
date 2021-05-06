@@ -74,7 +74,7 @@ export default function OccurrenceLayer(props) {
   // }
 
   return (<LayerGroup>
-    {occurences.map(o => (<CircleMarker key={o.key} center={[o.decimalLatitude, o.decimalLongitude]} eventHandlers={{click: (e)=>{console.log('click', o)}}} >
+    {occurences.map(o => (<CircleMarker key={o.key} center={[o.decimalLatitude, o.decimalLongitude]} eventHandlers={{click: (e)=>{console.log('click', o)}}} pathOptions={{color: o.media?.length ? 'blue' : 'green' }} >
       <Popup>
         {o.media?.length && <div>
           <img src={o.media[0].identifier} width={200} />
