@@ -1,7 +1,7 @@
 import {wbApi} from "../_init.js";
 import { getPID, getUID } from "./pid-uid.js";
 import { getClaimProvenances } from "./provenance.js";
-import { fcEndpoint } from "constants/endpoints";
+import { fcEndpoint } from "../../constants/endpoints.js";
 
 export async function fetchTaxonById (taxonId) {
   // const url = wbApi.sparqlQuery(`
