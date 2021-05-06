@@ -166,11 +166,15 @@ const allStructures = [];
 const allCharacters = [];
 let structureCharacters = {};
 
-export default function FacetedSearch({actions}) {
+export default function FacetedSearch({actions, ...props}) {
   const {
     getWikiDataImagesForTaxa,
     getTaxaNamesOfRank,
   } = actions;
+
+  const {
+    allLocalTaxa
+  } = props;
 
   const history = useHistory();
   const location = useLocation();
@@ -380,6 +384,12 @@ export default function FacetedSearch({actions}) {
   //   }
   // }
 
+  const localResults = taxaResults.filter(result => {
+    return allLocalTaxa.findIndex(lt => lt.entity === result.taxon.value) > -1
+  })
+  const otherResults = taxaResults.filter(result => {
+    return allLocalTaxa.findIndex(lt => lt.entity === result.taxon.value) === -1
+  })
 
   return (
     <LayoutWidth><Container>
@@ -409,16 +419,28 @@ export default function FacetedSearch({actions}) {
         ))}
         <AddFacetButton onClick={handleAddFacetClick} />
       </FacetBuilder>
-      {isError
-        ? <ErrorContainer>Oops! Something went wrong.</ErrorContainer>
-        : <Results {...{isFetchingTaxa, taxaResults, isFetchingTaxaImages, taxaImages}} />
-      }
+      {isError && <ErrorContainer>Oops! Something went wrong.</ErrorContainer> || null}
+      {!isError && taxaResults.length &&
+        <div>
+          <h3>Plants sighted in your neighbourhood</h3>
+        {localResults.length 
+          ? <Results {...{isFetchingTaxa, taxaResults: localResults, isFetchingTaxaImages, taxaImages}} />
+          : `We couldn't find any plants spotted in your neighbourhood matching that description.`
+        }
+        <h3>Other plants matching your description</h3>
+        {otherResults.length
+          ? <Results {...{isFetchingTaxa, taxaResults: otherResults, isFetchingTaxaImages, taxaImages}} />
+          : `We couldn't find any plants matching your description.`
+        }
+        </div>
+      || null}
     </Container></LayoutWidth>
   );
 }
 
 function Results (props) {
   const {
+    allLocalTaxa,
     isFetchingTaxa,
     taxaResults,
     isFetchingTaxaImages,

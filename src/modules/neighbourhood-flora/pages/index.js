@@ -182,7 +182,7 @@ export default function NeighbourhoodFlora(props) {
       <Map actions={actions} onLocationChange={handleLocationChange} {...{location, getLocation, locationPermissionStatus, hasLocationError, taxa, isLoadingTaxa, isFetchingTaxaImages, taxaImages}} />
     </Route>
     <Route path={`${path}/identify`}>
-      <Identify actions={actions} {...{location, getLocation, locationPermissionStatus, hasLocationError, taxa, isLoadingTaxa, isFetchingTaxaImages, taxaImages}} />
+      <Identify actions={actions} {...{location, getLocation, locationPermissionStatus, hasLocationError, allLocalTaxa: taxa, isLoadingTaxa, isFetchingTaxaImages, taxaImages}} />
     </Route>
     <Route path={`${path}/media`}>
       <Media actions={actions} {...{location, getLocation, locationPermissionStatus, hasLocationError, taxa, isLoadingTaxa, isFetchingTaxaImages, taxaImages}} />
