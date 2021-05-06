@@ -233,11 +233,11 @@ export default function makeActions () {
         ?taxon ?taxonLabel 
         ?parentTaxon ?parentTaxonLabel 
         ?rank ?rankLabel 
-        ${addIf(mf.length, mf.map((f,i) => `
+        ${addIf(mf.length, mf.map((f,i) => (`
         ?relatedStructure${i} ?relatedStructure${i}Label 
         ?relatedCharacter${i} ?relatedCharacter${i}Label 
         ?provenance${i} ?provenance${i}Label
-        ?value${i}`).join("\n\n")
+        ?value${i}`).join("\n\n"))
         )}
         #?distribution
       WHERE {

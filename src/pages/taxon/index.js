@@ -8,7 +8,7 @@ import { fcEndpoint } from "constants/endpoints";
 import { FillBox, ScrollingFillBox } from "components/ui/Box";
 import EntityLabel from "components/wikibase-entity-label";
 import LayoutWidth from "components/layout-width";
-import { getClaimProvenances } from "actions/floracommons/provenance";
+// import { getClaimProvenances } from "actions/floracommons/provenance";
 import TaxonHierarchy from './hierarchy';
 import InlineProvenance from "./inline-provenance";
 import TabbedProvenance from "./tabbed-provenance";
@@ -86,8 +86,6 @@ const TaxonName = styled.h1`
   flex: 1;
   font-weight: normal;
 `;
-const TaxonRank = styled.div`
-`;
 const TaxonAuthority = styled.h4`
 
 `;
@@ -130,6 +128,7 @@ function Taxon({actions}) {
       .finally(() => setLoading(false));
     }
     load();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const applyTaxonData = (data) => {
@@ -216,7 +215,7 @@ function Taxon({actions}) {
         </Section>
 
         <Section id="wikibase">
-          Raw data can be viewed, and edits submitted, at the FloraCommons WikiBase Entity <a href={`${fcEndpoint.instance}/wiki/Item:${id}`} target="_blank">{id}</a>
+          Raw data can be viewed, and edits submitted, at the FloraCommons WikiBase Entity <a href={`${fcEndpoint.instance}/wiki/Item:${id}`} target="_blank" rel="noreferrer">{id}</a>
         </Section>
 
       </LayoutWidth>

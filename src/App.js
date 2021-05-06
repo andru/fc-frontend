@@ -6,7 +6,7 @@ import {
   Route,
   Redirect,
   Link,
-  NavLink,
+  NavLink
 } from "react-router-dom";
 import {Helmet} from "react-helmet";
 import { Segment, Dimmer, Loader, Image, Menu, Modal, Input, Icon } from "semantic-ui-react";
@@ -26,6 +26,8 @@ import Taxon from "pages/taxon";
 import TaxonHierarchy from "pages/hierarchy";
 
 import MapTest from "pages/MapTest";
+
+import Neighbourhood from "modules/neighbourhood-flora/pages";
 
 
 const AppGrid = styled.div`
@@ -58,13 +60,22 @@ const AppMain = styled.main`
   grid-area: main;
   display: flex;
   justify-self: center;
+  justify-content: center;
   width: 100vw;
 `;
 
 const AppTitle =  styled.h1`
   font-size: 1.4em;
   white-space: nowrap;
-  margin-right: 20px;
+  margin: 0 20px 0 0;
+`;
+
+const ModuleTitle =  styled.h1`
+  font-size: 1.4em;
+  white-space: nowrap;
+  margin: 0 20px 0 20px;
+  flex: 1 0 auto;
+  text-align: center;
 `;
 
 const AppSearch = styled.div`
@@ -99,6 +110,33 @@ const NavItem = styled(({ className, ...props }) => (
   font-weight: bold;
 `;
 
+const ModuleNav = styled.nav`
+  display: flex;
+  flex-direction: row;
+  justify-self: center;
+  flex: 1;
+`;
+
+const ModuleBaseNavItem = styled(NavLink)`
+  margin-bottom: -2px;
+  padding: 10px 20px;
+
+  font-size: 16px;
+  color: #555;
+
+  &:hover {
+    color: #333;
+  }
+`;
+
+const ModuleNavItem = styled(({ className, ...props }) => (
+  <BaseNavItem {...props} activeClassName={className} />
+))`
+  border-bottom: 2px solid #111;
+  color: #111;
+  font-weight: bold;
+`;
+
 
 
 function App() {
@@ -109,13 +147,14 @@ function App() {
   return (
     <Router>
       <Helmet>
-        <title>FloraCommons</title>
+        <title>My Neighbourhood Flora</title>
       </Helmet>
       <AppGrid>
         <AppHeader gridArea="header">
           <HeaderLayoutWidth>
-            <AppTitle>Flora Commons</AppTitle>
-            <HeaderNav direction="row">
+            <AppTitle>CFC</AppTitle>
+            <ModuleTitle>My Neighbourhood Flora</ModuleTitle>
+            {/* <HeaderNav direction="row">
               <NavItem to="/" exact>
                 <Icon name="home" />Home
               </NavItem>
@@ -128,7 +167,7 @@ function App() {
               <NavItem to="/map-test" >
                 <Icon name="map" />Map Test
               </NavItem>
-            </HeaderNav>
+            </HeaderNav> */}
             <AppSearch>
               <HeaderSearch actions={actions} />
             </AppSearch>
@@ -165,6 +204,10 @@ function App() {
 
               <Route path="/map-test" children={() => (
                 <MapTest actions={actions} />
+              )}
+              />
+              <Route path="/my-neighbourhood-flora" children={() => (
+                <Neighbourhood actions={actions} />
               )}
               />
             </Switch>

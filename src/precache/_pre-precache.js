@@ -7,8 +7,10 @@ import fetch from "node-fetch";
 
 import wikibaseSDK from "wikibase-sdk";
 
-dotenv.config();
+dotenv.config({path: path.resolve(process.cwd(), '.env')});
 global.fetch = fetch;
+
+console.log(process.env.REACT_APP_WIKI)
 
 const fcUIDLabel = 'fc-uid';
 const fcTypeLabel = 'fc-type';
@@ -54,7 +56,7 @@ const writeFile = util.promisify(fs.writeFile);
   }
 
   if (!fcType || !fcUID) {
-    throw new Error(`Failted to retrieve entity id for fc-type or fc-uid`);
+    throw new Error(`Failed to retrieve entity id for fc-type or fc-uid`);
   }
 
   // console.log(`fcType: ${fcType}; fcUID: ${fcUID}`)

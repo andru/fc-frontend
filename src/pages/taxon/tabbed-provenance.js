@@ -80,11 +80,18 @@ export default function TabbedProvenance (props) {
   } else if (props.provenances) { 
     allProvenances = provenances
   } else {
-    throw new Error("One of claims or allProvenances is required")
+    allProvenances = [];
+    // throw new Error("One of claims or allProvenances is required")
   }
   const [activeProvenance, setActiveProvenance] = useState(
     allProvenances.indexOf(initialActiveProvenance) > -1 ? initialActiveProvenance : undefined
   );
+
+  if (!props.provenances && !claims) {
+    console.error("One of claims or allProvenances is required");
+    return "Error";
+    // throw new Error("One of claims or allProvenances is required")
+  }
 
   return (<Container>
     <RenderComp 

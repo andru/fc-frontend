@@ -26,9 +26,11 @@ export default function GeographyData (props) {
     provenances,
   } = props;
 
-
+  if (!allClaims['taxon/distribution'] || !allClaims['taxon/distribution'].length) {
+    return null;
+  }
+ 
   const GeographyDataPane = makeGeographyDataPane(allClaims);
-
   return (<Tabbed provenances={provenances} hideProvenances={hideProvenances} paneComponent={GeographyDataPane} />);
 }
 

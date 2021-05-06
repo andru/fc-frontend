@@ -1,6 +1,7 @@
 import {wbApi} from "../_init.js";
 import { getPID, getUID } from "./pid-uid.js";
 import { getClaimProvenances } from "./provenance.js";
+import { fcEndpoint } from "constants/endpoints";
 
 export async function fetchTaxonById (taxonId) {
   // const url = wbApi.sparqlQuery(`
@@ -185,6 +186,36 @@ export async function getCommonDistributionValues () {
     // return data.map(row => ({name: row.dist}))
     // console.log(``, data)
     return data.map(row => row.dist).sort();
+  }).catch(err => {
+    console.error(err);
+  });
+}
+
+export async function getTaxaByGBIFKeys (gbifKeys) {
+  // const url = wbApi.sparqlQuery();
+
+  return await fetch(fcEndpoint.sparqlEndpoint, {
+    method: 'POST',
+    mode: 'cors',
+    headers: {
+      'Content-Type': 'application/sparql-query',
+      'User-Agent': 'floracommons-1',
+      'Accept': 'application/sparql-results+json'
+    },
+    body: `SELECT ?entity ?uid ?rank ?name ?gbifkey WHERE {
+      VALUES ?keys {${gbifKeys.map(key => `'${key}'`).join(' ')}} 
+      ?entity wdt:${getPID('core/instance of')} "taxon";
+              wdt:${getPID('identifiers/gbif')} ?keys;
+              wdt:${getPID('identifiers/gbif')} ?gbifkey;
+              wdt:${getPID('fc-uid')} ?uid;
+              wdt:${getPID('taxon/name')} ?name;
+              wdt:${getPID('taxon/rank')}/rdfs:label ?rank.
+    }`
+  }).then(async response => {
+    const data = wbApi.simplify.sparqlResults(await response.json());
+    // return data.map(row => ({name: row.dist}))
+    // console.log(``, data)
+    return data;
   }).catch(err => {
     console.error(err);
   });

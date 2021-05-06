@@ -2,7 +2,6 @@ import util from "util";
 import fs from "fs";
 import path from "path";
 
-
 import { getCommonDistributionValues } from "../actions/floracommons/get-taxon.js"
 
 const writeFile = util.promisify(fs.writeFile);
