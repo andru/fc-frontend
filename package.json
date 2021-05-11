@@ -11,7 +11,7 @@
     "dotenv": "^8.2.0",
     "greenlet": "^1.1.0",
     "grommet-icons": "^4.4.0",
-    "lodash": "^4.17.20",
+    "lodash": "^4.17.21",
     "node-fetch": "^2.6.1",
     "polished": "^3.5.1",
     "react": "^16.13.1",
