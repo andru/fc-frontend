@@ -51,17 +51,6 @@ function Home({actions}) {
         <li>EOL (not yet implemented)</li>
         <li>USDA PLANTS (not yet implemented)</li>
       </ul>
-      <h4>Not Yet Implemented</h4>
-      <ul>
-        <li>Taxon detail pages</li>
-        <li>Additional search facets
-          <ul>
-            <li>More specific morphology structures and characters</li>
-            <li>Authority, publication, habitat, elevation, distribution</li>
-          </ul>
-        </li>
-        <li>Taxonomic hierarchy navigation / visualisation</li>
-      </ul>
       </LayoutWidth>
     </Container>
   );

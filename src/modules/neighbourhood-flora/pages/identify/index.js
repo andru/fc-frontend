@@ -204,7 +204,7 @@ function NeighbourhoodIdentify (props) {
         <h3>Results</h3>
         <Card.Group>
           {results.map(({taxon, parentTaxon, rank, morphHits, simpleHits}) => 
-          <Card key={taxon.entity} link href={`/my-neighbourhood-flora/taxon/${taxon.entity}`}>
+          <Card key={taxon.value} link href={`/my-neighbourhood-flora/taxon/${taxon.entity}`}>
           {isFetchingTaxaImages
             ? <Placeholder>
                 <Placeholder.Image square />
