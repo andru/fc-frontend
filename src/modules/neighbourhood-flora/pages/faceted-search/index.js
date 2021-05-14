@@ -454,7 +454,7 @@ function Results (props) {
       {!isFetchingTaxa && taxaResults?.length ? <TaxaResults>
         <Card.Group>
         {taxaResults.map(({taxon, parentTaxon, rank, morphHits, simpleHits}) => (
-           <Card key={taxon.value} link href={`/taxon/${taxon.value}`}>
+           <Card key={taxon.value} link href={`/my-neighbourhood-flora/taxon/${taxon.value}`}>
               {isFetchingTaxaImages
                 ? <Placeholder>
                     <Placeholder.Image square />

@@ -7,16 +7,21 @@ export async function getTaxaWithFacets (morphFacets, simpleFacets, queryOptions
   queryOptions = queryOptions ? queryOptions : {
     breakCache: false
   }
-  const mf = morphFacets.filter(facet => facet[0] && facet[1] && facet[2] && facet[2].length);
+  const defaultFacetOptions = {
+    querySubstructures: true,
+    querySubcharacters: true,
+  }
+  const mf = morphFacets.filter(facet => facet[0] && facet[1] && facet[2] && facet[2].length).map(facet => (facet[3] = {...facet[3] ?? {}, ...defaultFacetOptions}) && facet);
+
   console.log(`Morph facets`, mf);
   const numFacets = mf.length;
-  const addIf = (condition, fragment) => condition ? fragment : '';
+  const addIf = (condition, args, fragment) => condition ? fragment(...args) : '';
   const url = wbApi.sparqlQuery(`#
     SELECT DISTINCT 
       ?taxon ?taxonLabel 
       ?parentTaxon ?parentTaxonLabel 
       ?rank ?rankLabel 
-      ${addIf(numFacets, mf.map((f,i) => `
+      ${addIf(numFacets, [numFacets], (numFacets) => mf.map((f,i) => `
       ?relatedStructure${i} ?relatedStructure${i}Label 
       ?relatedCharacter${i} ?relatedCharacter${i}Label 
       ?provenance${i} ?provenance${i}Label
@@ -27,26 +32,26 @@ export async function getTaxaWithFacets (morphFacets, simpleFacets, queryOptions
       SERVICE wikibase:label {bd:serviceParam wikibase:language "en" }
       # order of execution is important, so better slow and accurate than optimised and wrong
       hint:Query hint:optimizer "None".
-      ${ addIf(numFacets, mf.map(([structureId, characterId, values], i) => `VALUES ?values_${i} {${values.map(v => `"${v}"`).join(' ')}}`).join("\n"))}
-      ${ addIf(simpleFacets.family.length, `VALUES ?families {${simpleFacets.family.map(v => `<http://wikibase.svc/entity/${v}>`).join(' ')}}`)}
-      ${ addIf(simpleFacets.rank.length, `VALUES ?ranks {${simpleFacets.rank.map(v => `<http://wikibase.svc/entity/${v}>`).join(' ')}}`)}
-      ${ addIf(simpleFacets.distribution.length, `VALUES ?distValues {${simpleFacets.distribution.map(v => `"${v}"`).join(' ')}}`)}
+      ${ addIf(numFacets, [mf], (mf) => mf.map(([structureId, characterId, values], i) => `VALUES ?values_${i} {${values.map(v => `"${v}"`).join(' ')}}`).join("\n"))}
+      ${ addIf(simpleFacets?.family?.length, [simpleFacets], (sf) => `VALUES ?families {${sf?.family.map(v => `<http://wikibase.svc/entity/${v}>`).join(' ')}}`)}
+      ${ addIf(simpleFacets?.rank?.length, [simpleFacets], (sf) =>`VALUES ?ranks {${sf?.rank.map(v => `<http://wikibase.svc/entity/${v}>`).join(' ')}}`)}
+      ${ addIf(simpleFacets?.distribution?.length, [simpleFacets], (sf) =>`VALUES ?distValues {${sf?.distribution.map(v => `"${v}"`).join(' ')}}`)}
 
-      ${ addIf(simpleFacets.family.length, `
+      ${ addIf(simpleFacets?.family?.length, [simpleFacets], (sf) =>`
         ?taxon wdt:${getPID("taxon/parent taxon")}+ ?families.
       `)}
-      ${ addIf(simpleFacets.rank.length, `
+      ${ addIf(simpleFacets?.rank?.length, [simpleFacets], (sf) =>`
         ?taxon wdt:${getPID("taxon/rank")} ?ranks.
       `)}
-      ${ addIf(simpleFacets.distribution.length, `
+      ${ addIf(simpleFacets?.distribution?.length, [simpleFacets], (sf) =>`
         ?taxon wdt:${getPID("taxon/distribution")} ?distValues.
       `)}
 
-      ${addIf(numFacets, mf.map(([structureId, characterId], i) => `
+      ${addIf(numFacets, [mf], (mf) => mf.map(([structureId, characterId, v, opts], i) => `
 
       ?st${i} pq:${getPID("taxon/morphology statement value")} ?values_${i}.
-      wd:${structureId} (^wdt:${getPID("core/substructure of")})*/(^pq:${getPID("taxon/morphology statement structure")}) ?st${i}.
-      wd:${characterId} (^wdt:${getPID('core/subcharacter of')})*/(^pq:${getPID("taxon/morphology statement character")}) ?st${i}.
+      wd:${structureId} ${opts.querySubstructures ? `(^wdt:${getPID("core/substructure of")})*/` : ``}(^pq:${getPID("taxon/morphology statement structure")}) ?st${i}.
+      wd:${characterId} ${opts.querySubcharacters ? `(^wdt:${getPID('core/subcharacter of')})*/` : ``}(^pq:${getPID("taxon/morphology statement character")}) ?st${i}.
       ?st${i} ^p:${getPID("taxon/morphology statement")} ?taxon.
 
       ?st${i} pq:${getPID("taxon/morphology statement value")} ?value${i};
@@ -65,7 +70,7 @@ export async function getTaxaWithFacets (morphFacets, simpleFacets, queryOptions
       throw new Error("Query failed");
     }
     const data = wbApi.simplify.sparqlResults(await response.json());
-    console.log('Taxon facet results', data);
+    // console.log('Taxon facet results', data);
     /* {
       taxon: Object { value: "QID", label: "String" }
       parentTaxon: Object { value: "QID", label: "String" }

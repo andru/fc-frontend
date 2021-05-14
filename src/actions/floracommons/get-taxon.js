@@ -87,6 +87,8 @@ async function normaliseResult (json) {
       return selectedClaims.map(mapFn);
     }
 
+    const datatypes = {}
+
     const addSimpleValue = (uid) => {
       const claimObj = getClaim(uid);
       // const prov = claimObj.references?.[0].snaks?.[getPID('core/provenance')]?.
@@ -97,6 +99,7 @@ async function normaliseResult (json) {
               id: claimObj?.mainsnak?.datavalue?.value?.id
             }
             break;
+          case 'external-id':
           case 'quantity':
           case 'string':
           default:
@@ -166,6 +169,8 @@ async function normaliseResult (json) {
     addSimpleValue('taxon/parent taxon');
     addSimpleValue('taxon/authority');
     addSimpleValue('taxon/rank');
+    addSimpleValue('identifiers/gbif');
+
 
     console.log('Taxon', taxon);
     return taxon;

@@ -15,7 +15,9 @@ import OccurrenceLayer from './occurence-layer';
 
 
 const Container = styled.div`
-
+  width: 100vw;
+  height: calc(100vh - 92px);
+  display: flex;
 `;
 
 function NeighbourhoodBrowse (props) {
@@ -30,14 +32,10 @@ function NeighbourhoodBrowse (props) {
   } = props
 
   return (<Container>
-    <LayoutWidth>
       {isLoadingTaxa 
       ? <Loading {...props} />
       : <RenderTaxa {...props} />
       }
-    </LayoutWidth>
-
-
   </Container>)
 }
 
@@ -46,6 +44,8 @@ function Loading (props) {
 }
 
 const FacetedBrowser = styled.div`
+  width: 100%;
+  flex: 1;
   display: grid;
   grid-template-columns: 250px 1fr;
   grid-template-areas:
@@ -53,8 +53,12 @@ const FacetedBrowser = styled.div`
   `;
 const FacetList = styled(Menu)`
   grid-area: facets;
+  overflow-y: scroll;
   /* list-style: none;
   padding: 0; */
+  &.ui.vertical.menu{
+    width: auto;
+  }
 `;
 const Facet = styled(Menu.Item)``;
 const FacetTitle = styled(Header)``;
@@ -122,7 +126,9 @@ function RenderTaxa (props) {
 
   const moveEndHandler = useCallback( () => {
     const center = map.getCenter()
-    onLocationChange([center.lat, center.lng]);
+    const bounds = map.getPixelBounds();
+    const radius = map.distance(map.containerPointToLatLng(bounds.getTopLeft()), map.containerPointToLatLng(bounds.getBottomLeft()))/2;
+    onLocationChange([center.lat, center.lng], radius);
   }, [map, onLocationChange])
 
 
@@ -170,7 +176,7 @@ function RenderTaxa (props) {
       )}
     </FacetList>
     <Taxa>
-    <MapContainer center={location} zoom={defaultZoom} scrollWheelZoom={false} style={{height:900}} maxZoom={maxZoom} minZoom={minZoom} whenCreated={setMap}>
+    <MapContainer center={location} zoom={defaultZoom} scrollWheelZoom={false} style={{height:'100%'}} maxZoom={maxZoom} minZoom={minZoom} whenCreated={setMap}>
         <LayersControl position="topright">
 
             {/* <TileLayer

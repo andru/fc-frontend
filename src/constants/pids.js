@@ -49,6 +49,7 @@ export default {
   "taxon/measurement/from": "P48",
   "taxon/measurement/to": "P49",
   "taxon/import errors": "P50",
+  "identifiers/gbif": "P51",
   "taxon/simple value": "Q1",
   "taxon/range value": "Q2",
   "taxon/modified value": "Q3"

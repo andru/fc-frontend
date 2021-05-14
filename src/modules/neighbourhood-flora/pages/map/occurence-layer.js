@@ -79,7 +79,7 @@ export default function OccurrenceLayer(props) {
         {o.media?.length && <div>
           <img src={o.media[0].identifier} width={200} />
         </div> || null}
-        <Link to={`/taxon/${entityId}`}>{o.scientificName}</Link>
+        <Link to={`/my-neighbourhood-flora/taxon/${entityId}`}>{o.scientificName}</Link>
       </Popup>
     </CircleMarker>))}
   </LayerGroup>);

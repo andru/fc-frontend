@@ -225,7 +225,11 @@ export default function makeActions () {
     queryOptions = queryOptions ? queryOptions : {
       breakCache: false
     }
-    const mf = morphFacets.filter(facet => facet[0] && facet[1] && facet[2] && facet[2].length);
+    const defaultFacetOptions = {
+      querySubstructures: true,
+      querySubcharacters: true,
+    }
+    const mf = morphFacets.filter(facet => facet[0] && facet[1] && facet[2] && facet[2].length).map(facet => (facet[3] = {...facet[3] ?? {}, ...defaultFacetOptions}) && facet);
     const numFacets = mf.length;
     const addIf = (condition, fragment) => condition ? fragment : '';
     const url = wbApi.sparqlQuery(`#
@@ -259,10 +263,10 @@ export default function makeActions () {
 
         ?taxon wdt:${getPID("taxon/rank")} ?rank.
 
-        ${addIf(mf.length, mf.map(([structureId, characterId], i) => `
+        ${addIf(mf.length, mf.map(([structureId, characterId, values, opts = {}], i) => `
 
-        ?st${i} pq:${getPID("taxon/morphology statement structure")}/^wdt:${getPID("core/substructure of")}* wd:${structureId}.
-        ?st${i} pq:${getPID("taxon/morphology statement character")}/^wdt:${getPID('core/subcharacter of')}* wd:${characterId}.
+        ?st${i} pq:${getPID("taxon/morphology statement structure")}${opts.querySubstructures ? `/^wdt:${getPID("core/substructure of")}*` : ``} wd:${structureId}.
+        ?st${i} pq:${getPID("taxon/morphology statement character")}${opts.querySubcharacters ? `/^wdt:${getPID('core/subcharacter of')}*` : ``} wd:${characterId}.
         ?st${i} pq:${getPID("taxon/morphology statement value")} ?values_${i}.
         ?st${i} pq:${getPID("taxon/morphology statement value")} ?value${i};
             pq:${getPID("taxon/morphology statement structure")} ?relatedStructure${i};

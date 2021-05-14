@@ -30,6 +30,7 @@ const Ref = styled.sup`
   padding: 0 4px;
   border-radius: 50%;
   background: #ccc;
+  cursor: help;
 `;
 
 function ProvenanceLabel (props) {

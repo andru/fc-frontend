@@ -6,7 +6,9 @@ import {
   Route,
   Redirect,
   Link,
-  NavLink
+  NavLink,
+  useRouteMatch,
+  useLocation,
 } from "react-router-dom";
 import {Helmet} from "react-helmet";
 import { Segment, Dimmer, Loader, Image, Menu, Modal, Input, Icon } from "semantic-ui-react";
@@ -19,6 +21,8 @@ import actions from "./actions/index.js";
 
 import HeaderSearch from "components/taxon-name-search";
 import LayoutWidth from "components/layout-width";
+import Sidebar from "components/sidebar";
+
 import Home from "pages/Home";
 import StructureCharacterSearch from "pages/structure-character";
 import FacetedSearch from "pages/faceted-search";
@@ -145,6 +149,9 @@ const ModuleNavItem = styled(({ className, ...props }) => (
   font-weight: bold;
 `;
 
+const SidebarToggle = styled(({className, actions, ...props}) => (<Icon name="sidebar" size="big" className={className} onClick={actions.toggleSidebar} />))`
+  cursor: pointer;
+`;
 
 
 function App() {
@@ -152,75 +159,20 @@ function App() {
   const [isReady, setIsReady] = useState(false);
   const [modalIsOpen, setModalIsOpen] = useState(false);
 
+  const [sidebarIsOpen, setSidebarOpen] = useState(false);
+
+  actions.toggleSidebar = () => {
+    setSidebarOpen(!sidebarIsOpen);
+  }
+
   return (
     <Router>
       <Helmet>
-        <title>My Neighbourhood Flora</title>
+        <title>Canadian Flora Commons</title>
       </Helmet>
-      <AppGrid>
-        <AppHeader gridArea="header">
-          <HeaderLayoutWidth>
-            <AppTitle><Link to="/">CFC</Link></AppTitle>
-            <ModuleTitle><Link to="/my-neighbourhood-flora">My Neighbourhood Flora</Link></ModuleTitle>
-            {/* <HeaderNav direction="row">
-              <NavItem to="/" exact>
-                <Icon name="home" />Home
-              </NavItem>
-              <NavItem to="/faceted-search" >
-                <Icon name="search" />Faceted Search
-              </NavItem>
-              <NavItem to="/taxon-hierarchy" >
-                <Icon name="tree" />Hierarchy
-              </NavItem>
-              <NavItem to="/map-test" >
-                <Icon name="map" />Map Test
-              </NavItem>
-            </HeaderNav> */}
-            <AppSearch>
-              <HeaderSearch actions={actions} />
-            </AppSearch>
-          </HeaderLayoutWidth>
-        </AppHeader>
-        <AppMain gridArea="main">
-          {isFetching && (
-            <Segment>
-              <Dimmer active={isFetching} page>
-                <Loader size="massive">Loading</Loader>
-              </Dimmer>
-            </Segment>
-          )}
-            <Switch>
-              <Route exact path="/">
-                <Home actions={actions} />
-              </Route>
-              <Route path="/structure-character-search"><Redirect to="/morphology-facets" /></Route>
-              <Route path="/morphology-facets" children={() => (
-                <StructureCharacterSearch actions={actions} />
-              )}
-              />
-              <Route path="/faceted-search" children={() => (
-                <FacetedSearch actions={actions} />
-              )}
-              />
-              <Route path="/taxon-hierarchy" children={() => (
-                <TaxonHierarchy actions={actions} />
-              )}
-              />
-              <Route path="/taxon/:id">
-                <Taxon actions={actions} />
-              </Route>
-
-              <Route path="/map-test" children={() => (
-                <MapTest actions={actions} />
-              )}
-              />
-              <Route path="/my-neighbourhood-flora" children={() => (
-                <Neighbourhood actions={actions} />
-              )}
-              />
-            </Switch>
-        </AppMain>
-      </AppGrid>
+      <Sidebar isOpen={sidebarIsOpen} onClose={() => setSidebarOpen(false)}>
+        <Module isFetching={isFetching} />
+      </Sidebar>
       <Modal
         open={modalIsOpen}
         onClose={() => setModalIsOpen(false)}
@@ -240,3 +192,90 @@ function App() {
 }
 
 export default App;
+
+
+function Module (props) {
+
+  const {isFetching } = props;
+  const location = useLocation()
+  let { path, url } = useRouteMatch(location.pathname);
+
+  // quick hack for module based on url path
+  const modulesByPath = [
+    ['my-neighbourhood-flora', {
+      path: '/my-neighbourhood-flora', 
+      title: 'My Neighbourhood Flora'
+    }]
+  ];
+  console.log(url);
+  const [p, module] = modulesByPath.find(([pathMatch, module]) => path.match(pathMatch)) ?? ['/', {title: "Canadian Flora Commons", path: '/'}]
+
+  return <AppGrid>
+          <Helmet>
+        <title>{module.title}</title>
+      </Helmet>
+  <AppHeader gridArea="header">
+    <HeaderLayoutWidth>
+      <SidebarToggle actions={actions} />
+      <AppTitle><Link to="/">CFC</Link></AppTitle>
+      <ModuleTitle><Link to={module.path}>{module.title}</Link></ModuleTitle>
+      {/* <HeaderNav direction="row">
+        <NavItem to="/" exact>
+          <Icon name="home" />Home
+        </NavItem>
+        <NavItem to="/faceted-search" >
+          <Icon name="search" />Faceted Search
+        </NavItem>
+        <NavItem to="/taxon-hierarchy" >
+          <Icon name="tree" />Hierarchy
+        </NavItem>
+        <NavItem to="/map-test" >
+          <Icon name="map" />Map Test
+        </NavItem>
+      </HeaderNav> */}
+      <AppSearch>
+        <HeaderSearch actions={actions} />
+      </AppSearch>
+    </HeaderLayoutWidth>
+  </AppHeader>
+  <AppMain gridArea="main">
+    {isFetching && (
+      <Segment>
+        <Dimmer active={isFetching} page>
+          <Loader size="massive">Loading</Loader>
+        </Dimmer>
+      </Segment>
+    )}
+      <Switch>
+        <Route exact path="/">
+          <Home actions={actions} />
+        </Route>
+        <Route path="/structure-character-search"><Redirect to="/morphology-facets" /></Route>
+        <Route path="/morphology-facets" children={() => (
+          <StructureCharacterSearch actions={actions} />
+        )}
+        />
+        <Route path="/faceted-search" children={() => (
+          <FacetedSearch actions={actions} />
+        )}
+        />
+        <Route path="/taxon-hierarchy" children={() => (
+          <TaxonHierarchy actions={actions} />
+        )}
+        />
+        <Route path="/taxon/:id">
+          <Taxon actions={actions} />
+        </Route>
+
+        <Route path="/map-test" children={() => (
+          <MapTest actions={actions} />
+        )}
+        />
+        <Route path="/my-neighbourhood-flora" children={() => (
+          <Neighbourhood actions={actions} />
+        )}
+        />
+      </Switch>
+  </AppMain>
+</AppGrid>
+}

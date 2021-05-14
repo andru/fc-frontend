@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useCallback} from 'react';
 import styled from 'styled-components';
 
 import LayoutWidth from 'components/layout-width'
@@ -25,9 +25,29 @@ const defaultZoom = 12;
 const maxZoom = 14;
 const minZoom = 10;
 
+function StaticCircle (props) {
+  const map = useMap();
+  const size = map.getSize();
+  const center = map.getCenter()
+  const bounds = map.getPixelBounds();
+  const diameter = map.distance(map.containerPointToLatLng(bounds.getTopLeft()), map.containerPointToLatLng(bounds.getBottomLeft()))/1000;
+  return (<svg pointerevents="none" height="100%" width="100%" style={{zIndex:500, position:"relative"}}>
+    <mask id="hole">
+      <rect width="100%" height="100%" fill="white"/>
+      <circle cx="50%" cy="50%" r={(size.y-50)/2} fill="black" />
+    </mask>
+    <rect width="100%" height="100%" fill="rgba(0,0,0,0.3)" mask="url(#hole)" />
+
+      
+    {/* <circle cx="50%" cy="50%" r={(size.y-50)/2} strokeWidth="2" stroke="red" fill="rgba(255,0,255,0.3)" /> */}
+    <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" style={{textAlign: "center", fontWeight:"bold", fontSize:"3em"}}>{Math.floor(diameter)} km</text>
+  </svg>)
+}
+
 function NeighbourhoodHome (props) {
 
   const {
+    onLocationChange,
     locationPermissionStatus,
     hasLocationError,
     location,
@@ -44,6 +64,21 @@ function NeighbourhoodHome (props) {
     }
   }, [map, location])
 
+  const moveEndHandler = useCallback( () => {
+    const center = map.getCenter()
+    const bounds = map.getPixelBounds();
+    const radius = map.distance(map.containerPointToLatLng(bounds.getTopLeft()), map.containerPointToLatLng(bounds.getBottomLeft()))/2;
+    onLocationChange([center.lat, center.lng], radius);
+  }, [map, onLocationChange])
+
+
+  useEffect(() => {
+    if (map) {
+      map.on('moveend', moveEndHandler)
+    }
+    return (() => map && map.off('moveend', moveEndHandler))
+  }, [map, moveEndHandler])
+
   const totalOccurrences = taxa ? taxa.reduce((sum, taxon) => sum + taxon?.occurrences ?? 0, 0) : 0;
 
   return (<Container>
@@ -51,10 +86,12 @@ function NeighbourhoodHome (props) {
 
             <TileLayer
               attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-              url="https://tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png"
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
 
-            <Circle center={location ? location : defaultCoords} radius={10000} />
+            {/* <Circle center={location ? location : defaultCoords} radius={10000} /> */}
+
+            <StaticCircle />
 
       </MapContainer>
 

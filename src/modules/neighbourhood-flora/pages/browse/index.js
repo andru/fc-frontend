@@ -128,7 +128,7 @@ function RenderTaxa (props) {
     <Taxa>
       <Card.Group>
       {filteredTaxa.map(taxon => 
-      <Card key={taxon.entity} link href={`/taxon/${taxon.entity}`}>
+      <Card key={taxon.entity} link href={`/my-neighbourhood-flora/taxon/${taxon.entity}`}>
       {isFetchingTaxaImages
         ? <Placeholder>
             <Placeholder.Image square />

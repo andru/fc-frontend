@@ -20,9 +20,10 @@ import LayoutWidth from 'components/layout-width';
 import Home from './home';
 import Browse from './browse';
 import Map from './map';
-// import Identify from './identify';
-import Media from './media';
-import Identify from './faceted-search';
+import Identify from './identify';
+// import Media from './media';
+import Search from './faceted-search';
+import Taxon from './taxon';
 
 
 const Container = styled.div`
@@ -35,6 +36,7 @@ const ModuleNav = styled.nav`
   flex-direction: row;
   justify-self: center;
   flex: 1;
+  margin-bottom: 5px;
 `;
 
 const ModuleBaseNavItem = styled(NavLink)`
@@ -67,6 +69,8 @@ export default function NeighbourhoodFlora(props) {
   
 
   const [location, setLocation] = useState(false);
+  const [radius, setRadius] = useState(10000);
+
   const [locationPermissionStatus, setLocationPermissionStatus] = useState(undefined)
   const [hasLocationError, setHasLocationError] = useState(0);
   const [isLoadingTaxa, setTaxaLoading] = useState(true)
@@ -116,7 +120,7 @@ export default function NeighbourhoodFlora(props) {
 
   useEffect(() => {
     if (location) {
-      getFloraInBounds(location, 10).then(async gbifRows => {
+      getFloraInBounds(location, radius/1000).then(async gbifRows => {
         // console.log(gbifRows)
         // console.log('Getting FC taxa for GBIF keys')
         const taxa = await getTaxaByGBIFKeys(gbifRows.map(row => row.key));
@@ -140,26 +144,30 @@ export default function NeighbourhoodFlora(props) {
         setError(e)
       })
     }
-  }, [lat, lng])
+  }, [lat, lng, radius])
 
-  const handleLocationChange = (coords) => {
+  const handleLocationChange = (coords, radius) => {
     setLocation(coords);
+    setRadius(radius);
   }
 
   return (<Container>
             <LayoutWidth>
             <ModuleNav direction="row">
-              {/* <ModuleNavItem to="/" exact>
-                <Icon name="home" />Home
-              </ModuleNavItem> */}
-              <ModuleNavItem to={`${path}/browse`} >
-                <Icon name="search" />Browse
-              </ModuleNavItem>
-              <ModuleNavItem to={`${path}/identify`} >
-                <Icon name="tree" />Identify
+              <ModuleNavItem to={`${path}`} exact>
+                <Icon name="home" />
               </ModuleNavItem>
               <ModuleNavItem to={`${path}/map`} >
                 <Icon name="map" />Map
+              </ModuleNavItem>
+              <ModuleNavItem to={`${path}/browse`} >
+                <Icon name="tree" />Browse
+              </ModuleNavItem>
+              <ModuleNavItem to={`${path}/identify`} >
+                <Icon name="eye" />Identify
+              </ModuleNavItem>
+              <ModuleNavItem to={`${path}/search`} >
+                <Icon name="search" />Properties
               </ModuleNavItem>
               {/* <ModuleNavItem to={`${path}/media`} >
                 <Icon name="map" />Photos
@@ -173,7 +181,7 @@ export default function NeighbourhoodFlora(props) {
   </div>
   : <Switch>
     <Route exact path={`${path}`}>
-      <Home actions={actions} {...{location, getLocation, locationPermissionStatus, hasLocationError, taxa, isLoadingTaxa}} />
+      <Home actions={actions} onLocationChange={handleLocationChange} {...{location, getLocation, locationPermissionStatus, hasLocationError, taxa, isLoadingTaxa}} />
     </Route>
     <Route path={`${path}/browse`}>
       <Browse actions={actions} {...{location, getLocation, locationPermissionStatus, hasLocationError, taxa, isLoadingTaxa, isFetchingTaxaImages, taxaImages}} />
@@ -181,12 +189,18 @@ export default function NeighbourhoodFlora(props) {
     <Route path={`${path}/map`}>
       <Map actions={actions} onLocationChange={handleLocationChange} {...{location, getLocation, locationPermissionStatus, hasLocationError, taxa, isLoadingTaxa, isFetchingTaxaImages, taxaImages}} />
     </Route>
+    <Route path={`${path}/search`}>
+      <Search actions={actions} {...{location, getLocation, locationPermissionStatus, hasLocationError, allLocalTaxa: taxa, isLoadingTaxa, isFetchingTaxaImages, taxaImages}} />
+    </Route>
     <Route path={`${path}/identify`}>
       <Identify actions={actions} {...{location, getLocation, locationPermissionStatus, hasLocationError, allLocalTaxa: taxa, isLoadingTaxa, isFetchingTaxaImages, taxaImages}} />
     </Route>
-    <Route path={`${path}/media`}>
-      <Media actions={actions} {...{location, getLocation, locationPermissionStatus, hasLocationError, taxa, isLoadingTaxa, isFetchingTaxaImages, taxaImages}} />
+    <Route path={`${path}/taxon/:id`}>
+      <Taxon actions={actions} {...{location, getLocation, locationPermissionStatus, hasLocationError, allLocalTaxa: taxa, isLoadingTaxa, isFetchingTaxaImages, taxaImages}} />
     </Route>
+    {/* <Route path={`${path}/media`}>
+      <Media actions={actions} {...{location, getLocation, locationPermissionStatus, hasLocationError, taxa, isLoadingTaxa, isFetchingTaxaImages, taxaImages}} />
+    </Route> */}
   </Switch>}
   </Container>)
 }
