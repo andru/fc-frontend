@@ -233,7 +233,7 @@ export default function FacetedSearch({actions, ...props}) {
     //   }
     // }
     const fetchStructureCharacterCache = async () => {
-      const list = await fetch('/structure-character-baked.json').then(r => r.json());
+      const list = await fetch('/structure-character.json').then(r => r.json());
       console.log(list);
       return list;
     }
