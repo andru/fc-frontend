@@ -82,7 +82,7 @@ function NeighbourhoodHome (props) {
   const totalOccurrences = taxa ? taxa.reduce((sum, taxon) => sum + taxon?.occurrences ?? 0, 0) : 0;
 
   return (<Container>
-    <MapContainer center={location ? location : defaultCoords} zoom={defaultZoom} scrollWheelZoom={false} style={{height:900, width:'100vw'}} maxZoom={maxZoom} minZoom={minZoom} whenCreated={setMap}>
+    <MapContainer center={location ? location : defaultCoords} zoom={defaultZoom} scrollWheelZoom={false} style={{height:'80vh', width:'100vw'}} maxZoom={maxZoom} minZoom={minZoom} whenCreated={setMap}>
 
             <TileLayer
               attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'

@@ -20,8 +20,8 @@ const writeFile = util.promisify(fs.writeFile);
 (async function fetchAndCache () {
 
   const fcEndpoint = {
-    instance: process.env.REACT_APP_WIKI || 'http://localhost',
-    sparqlEndpoint: process.env.REACT_APP_SPARQL || 'http://localhost:8989/bigdata/sparql', 
+    instance: process.env.REACT_APP_WIKI || 'http://base.floracommons.org',
+    sparqlEndpoint: process.env.REACT_APP_SPARQL || 'http://wdqs.floracommons.org/bigdata/sparql', 
   }
   const wbApi = wikibaseSDK(fcEndpoint);
   

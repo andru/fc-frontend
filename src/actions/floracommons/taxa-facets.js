@@ -11,7 +11,7 @@ export async function getTaxaWithFacets (morphFacets, simpleFacets, queryOptions
     querySubstructures: true,
     querySubcharacters: true,
   }
-  const mf = morphFacets.filter(facet => facet[0] && facet[1] && facet[2] && facet[2].length).map(facet => (facet[3] = {...facet[3] ?? {}, ...defaultFacetOptions}) && facet);
+  const mf = morphFacets.filter(facet => facet[0] && facet[1] && facet[2] && facet[2].length).map(facet => (facet[3] = {...defaultFacetOptions, ...(facet[3] ?? {})}) && facet);
 
   console.log(`Morph facets`, mf);
   const numFacets = mf.length;

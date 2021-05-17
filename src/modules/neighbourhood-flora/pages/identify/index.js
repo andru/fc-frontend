@@ -2,7 +2,7 @@ import React, {useState, useEffect} from 'react';
 import styled from 'styled-components';
 import { Card, Placeholder, Icon, Segment } from 'semantic-ui-react';
 import { getTaxaWithFacets } from "actions/floracommons/taxa-facets";
-
+import { getPID } from "actions/floracommons/pid-uid";
 import LayoutWidth from 'components/layout-width'
 
 
@@ -129,8 +129,54 @@ const leafShapeValues = [
   'thread-like',
   'unlobed',
 ]
-//  plant/structure/whole organism
-//  plant/character/growth form
+
+const flowerShapeValues = [
+  '',
+'2(-3)-pinnate',
+'2-3-pinnate',
+'2-pinnate',
+'asymmetric',
+'buttonlike',
+'capitate',
+'compressed',
+'conelike',
+'conic',
+'convex',
+'cylindric',
+'distal',
+'domed',
+'ellipsoid',
+'elliptic',
+'elongate',
+'emersed',
+'globose',
+'headlike',
+'irregular',
+'lance-cylindric',
+'linear',
+'linear to narrowly',
+'moniliform',
+'ovoid',
+'ovoid-ellipsoid',
+'pinnate',
+'pyramidal',
+'sheathing',
+'short-cylindric',
+'spikel-like',
+'spikelike',
+'terete',
+'umbel-like',
+]
+
+const ResultsPlaceholder = styled(({className, children, ...props}) => (
+  <Placeholder fluid className={className}>
+    {new Array(20).fill(true).map((a, i) => (<Placeholder.Header key={i}>
+      <Placeholder.Line />
+      <Placeholder.Line />
+    </Placeholder.Header>))}
+  </Placeholder>
+))`
+`;
 
 
 function NeighbourhoodIdentify (props) {
@@ -146,8 +192,11 @@ function NeighbourhoodIdentify (props) {
     taxaImages
   } = props
 
+  const [isFetching, setFetching] = useState(false)
   const [habits, setHabits] = useState([]);
   const [leafShapes, setLeafShapes] = useState([]);
+  const [flowerShapes, setFlowerShapes] = useState([]);
+
   const [results, setResults] = useState([]);
 
   useEffect(() => {
@@ -157,19 +206,29 @@ function NeighbourhoodIdentify (props) {
     } 
     const facets = [];
     if (habits.length) {
-      facets.push(['Q74', 'Q763', habits, facetOptions]);
+      // facets.push([getPID('plant/structure/whole organism'), getPID('plant/character/growth form'), habits, facetOptions]);
+      facets.push(['Q74', 'Q2988', habits, facetOptions]);
+
     }
     if (leafShapes.length) {
-      facets.push(['Q57', 'Q476', leafShapes, facetOptions]);
+      // facets.push([getPID('plant/structure/leaf'), getPID('plant/character/shape'), leafShapes, facetOptions]);
+      facets.push(["Q57", "Q476", leafShapes, facetOptions]);
+
+    }
+    if (flowerShapes.length) {
+      // facets.push([getPID('plant/structure/inflorescence'), getPID('plant/character/shape'), flowerShapes, facetOptions]);
+      facets.push(['Q55', 'Q476', flowerShapes, facetOptions]);
     }
 
     if (facets.length) {
+      setFetching(true)
       getTaxaWithFacets(facets, {}).then(res => {
         console.log('Identify results', res)
         setResults(res);
+        setFetching(false);
       })
     }
-  }, [habits, leafShapes]);
+  }, [habits, leafShapes, flowerShapes]);
   
 
   return (<Container>
@@ -177,20 +236,21 @@ function NeighbourhoodIdentify (props) {
       <Facets>
         <Facet>
           <FacetImage></FacetImage>
-          <FacetTitle>Form or Habit</FacetTitle>
-          <FacetDescription>Is it a tree? A bush? A vine?</FacetDescription>
-          <select onChange={(e) => setHabits([e.target.value])}>{habitValues.map(value => <option value={value} selected={habits[0]==={value}}>{value}</option>)}</select>
-        </Facet>
-        <Facet>
-          <FacetImage></FacetImage>
           <FacetTitle>Leaf Shape</FacetTitle>
           <FacetDescription>Round? Pointy? Smooth?</FacetDescription>
-          <select onChange={(e) => setLeafShapes([e.target.value])}>{leafShapeValues.map(value => <option value={value} selected={leafShapes[0]==={value}}>{value}</option>)}</select>
+          <select onChange={(e) => !!e.target.value ? setLeafShapes([e.target.value]) : setLeafShapes([])}>{leafShapeValues.map(value => <option value={value} selected={leafShapes[0]==={value}}>{value}</option>)}</select>
         </Facet>
         <Facet>
           <FacetImage></FacetImage>
           <FacetTitle>Flower Shape</FacetTitle>
           <FacetDescription>Choose a flower shape...</FacetDescription>
+          <select onChange={(e) => !!e.target.value ? setFlowerShapes([e.target.value]) : setFlowerShapes([])}>{flowerShapeValues.map(value => <option value={value} selected={leafShapes[0]==={value}}>{value}</option>)}</select>
+        </Facet>
+        <Facet>
+          <FacetImage></FacetImage>
+          <FacetTitle>Form or Habit</FacetTitle>
+          <FacetDescription>Is it a tree? A bush? A vine?</FacetDescription>
+          <select onChange={(e) => !!e.target.value ? setHabits([e.target.value]) : setHabits([])}>{habitValues.map(value => <option value={value} selected={habits[0]==={value}}>{value}</option>)}</select>
         </Facet>
         <Facet>
           <FacetImage></FacetImage>
@@ -200,11 +260,15 @@ function NeighbourhoodIdentify (props) {
       </Facets>
     </LayoutWidth>
     <LayoutWidth>
+      {isFetching 
+      ? <ResultsPlaceholder />
+      : results.length ? 
       <ResultsContainer>
-        <h3>Results</h3>
+        
+        <h3>{results.length > 99 && 'Over '}{results.length} Results</h3>
         <Card.Group>
           {results.map(({taxon, parentTaxon, rank, morphHits, simpleHits}) => 
-          <Card key={taxon.value} link href={`/my-neighbourhood-flora/taxon/${taxon.entity}`}>
+          <Card key={taxon.value} link href={`/my-neighbourhood-flora/taxon/${taxon.value}`}>
           {isFetchingTaxaImages
             ? <Placeholder>
                 <Placeholder.Image square />
@@ -223,8 +287,8 @@ function NeighbourhoodIdentify (props) {
             </Card.Description>
           </Card.Content>
         </Card>)}
-      </Card.Group>
-    </ResultsContainer>
+      </Card.Group> 
+    </ResultsContainer> : null}
     </LayoutWidth>
 
   </Container>)

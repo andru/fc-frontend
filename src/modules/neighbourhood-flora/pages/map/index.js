@@ -179,31 +179,12 @@ function RenderTaxa (props) {
     <MapContainer center={location} zoom={defaultZoom} scrollWheelZoom={false} style={{height:'100%'}} maxZoom={maxZoom} minZoom={minZoom} whenCreated={setMap}>
         <LayersControl position="topright">
 
-            {/* <TileLayer
-              attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-              url="https://tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png"
-            /> */}
-
-            <TileLayer
-              url="https://stamen-tiles-{s}.a.ssl.fastly.net/terrain-background/{z}/{x}/{y}{r}.png"
-            />
-
-
-          <LayersControl.Overlay checked name="Roads and Borders">
-            <TileLayer
-              // attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-              // url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              url="https://stamen-tiles-{s}.a.ssl.fastly.net/terrain-lines/{z}/{x}/{y}{r}.png"
-            />
-          </LayersControl.Overlay>
-          
-          <LayersControl.Overlay checked name="Place Names">
           <TileLayer
-              // attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-              // url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              url="https://stamen-tiles-{s}.a.ssl.fastly.net/terrain-labels/{z}/{x}/{y}{r}.png"
+              attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
-          </LayersControl.Overlay>
+
+          
 
           <LayersControl.Overlay name="Raster Occurrence (better performance)">
             <TileLayer
