@@ -112,7 +112,7 @@ function RenderTaxa (props) {
   } = props
 
   const [facet, setFacet] = useState('none');
-  const [selectedTaxon, setSelectedTaxon] = useState(taxa[0])
+  const [selectedTaxon, setSelectedTaxon] = useState(taxa.length ? taxa[0] : null)
 
   const [map, setMap] = useState(undefined);
 
@@ -209,12 +209,12 @@ function RenderTaxa (props) {
             <TileLayer
               // attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
               // url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-              url={`https://api.gbif.org/v2/map/occurrence/density/{z}/{x}/{y}@1x.png?style=classic.poly&bin=hex&hexPerTile=30&taxonKey=${selectedTaxon.gbifkey}`}
+              url={`https://api.gbif.org/v2/map/occurrence/density/{z}/{x}/{y}@1x.png?style=classic.poly&bin=hex&hexPerTile=30&taxonKey=${selectedTaxon?.gbifkey}`}
             />
           </LayersControl.Overlay>
 
           <LayersControl.Overlay checked name="Occurrence">
-            <OccurrenceLayer gbifKey={selectedTaxon.gbifkey} entityId={selectedTaxon.entity} popupContent={renderCard()} />
+            <OccurrenceLayer gbifKey={selectedTaxon?.gbifkey} entityId={selectedTaxon?.entity} />
           </LayersControl.Overlay>
 
         </LayersControl>
