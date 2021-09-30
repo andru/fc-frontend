@@ -6,9 +6,9 @@ import { getPID, getUID } from "./pid-uid";
 export async function fetchHigherTaxa (taxonId, queryOptions = {breakCache: false}) {
   const url = wbApi.sparqlQuery(`SELECT ?sub ?sup ?rank (count(?mid)-1 as ?distance) { 
     VALUES ?sub {wd:${taxonId}}
-    ?sub wdt:P19* ?mid .
-    ?mid wdt:P19* ?sup .
-    ?sup wdt:P18 ?rank.
+    ?sub wdt:${getPID('taxon/parent taxon')}* ?mid .
+    ?mid wdt:${getPID('taxon/parent taxon')}* ?sup .
+    ?sup wdt:${getPID('taxon/rank')} ?rank.
  }
   GROUP BY ?sub ?sup ?rank
   ORDER BY DESC(?distance)`);
