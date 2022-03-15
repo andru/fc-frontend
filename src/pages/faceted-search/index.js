@@ -10,6 +10,9 @@ import FacetRow from "./facet-row";
 import ValueDropdownFacet from "./facet-creators/value-dropdown";
 
 import {ranks} from "constants/taxonomy";
+import {fcEndpoint} from "constants/endpoints";
+//@todo - this should be it's own constant
+const queryGuiUrl = fcEndpoint.instance.replace('base', 'query')
 /**
  * 
  * Notes
@@ -428,7 +431,7 @@ export default function FacetedSearch({actions}) {
             />
           ))}
           <AddFacetButton onClick={handleAddMorphFacetClick} />
-          {sparlqlQuery && <SparlqlLink><a href={`//query.dev.floracommons.org/${encodeURI(sparlqlQuery)}`} rel="noreferrer" target="_blank"><Icon name='globe' />Open Sparql Query</a></SparlqlLink>}
+          {sparlqlQuery && <SparlqlLink><a href={`${queryGuiUrl}/${encodeURI(sparlqlQuery)}`} rel="noreferrer" target="_blank"><Icon name='globe' />Open Sparql Query</a></SparlqlLink>}
 
         </FacetBuilder>
         {isError
