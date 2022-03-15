@@ -6,7 +6,9 @@ import { useHistory } from "react-router-dom";
 import { isFinite } from "lodash";
 
 const FacetRowContainer = styled.div`
-
+  display: flex;
+  align-items: center;
+  justify-content: stretch;
 `;
 
 export default function FacetRow (props) {
@@ -147,6 +149,7 @@ export default function FacetRow (props) {
         }))}
         value={selectedValues}
         onChange={handleValueChange}
+        style={{flex: 1}}
       />
       <Button icon="remove" onClick={handleRemoveClick} />
     {/* <Dropdown

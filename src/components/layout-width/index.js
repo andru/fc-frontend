@@ -2,7 +2,11 @@ import React from 'react';
 import styled from 'styled-components';
 
 const Container = styled.div`
-   @media only screen and (min-width: 1400px) {
+  width: 100%;
+  padding-left: 10px;
+  padding-right: 10px;
+
+  @media only screen and (min-width: 1400px) {
     width: 1200px;
     margin-left: auto;
     margin-right: auto;

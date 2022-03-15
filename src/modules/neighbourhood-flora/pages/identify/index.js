@@ -1,7 +1,7 @@
 import React, {useState, useEffect} from 'react';
 import styled from 'styled-components';
 import { Card, Placeholder, Icon, Segment } from 'semantic-ui-react';
-import { getTaxaWithFacets } from "actions/floracommons/taxa-facets";
+import { taxaFacetsQuery } from "actions/floracommons/taxa-facets";
 import { getPID } from "actions/floracommons/pid-uid";
 import LayoutWidth from 'components/layout-width'
 
@@ -222,7 +222,7 @@ function NeighbourhoodIdentify (props) {
 
     if (facets.length) {
       setFetching(true)
-      getTaxaWithFacets(facets, {}).then(res => {
+      taxaFacetsQuery(facets, {}).fetch().then(res => {
         console.log('Identify results', res)
         setResults(res);
         setFetching(false);

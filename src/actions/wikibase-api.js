@@ -401,8 +401,8 @@ export default function makeActions () {
     const url = wbApi.sparqlQuery(`
      SELECT DISTINCT ?value WHERE {
       _:st pq:${getPID("taxon/morphology statement value")} ?value.
-      _:st pq:${getPID("taxon/morphology statement structure")}/^wdt:${getPID("core/substructure of")}* wd:${structureId}.
-      _:st pq:${getPID("taxon/morphology statement character")}/^wdt:${getPID('core/subcharacter of')}* wd:${characterId}.
+      _:st pq:${getPID("taxon/morphology statement structure")}/wdt:${getPID("core/substructure of")}* wd:${structureId}.
+      _:st pq:${getPID("taxon/morphology statement character")}/wdt:${getPID('core/subcharacter of')}* wd:${characterId}.
     } 
     ORDER BY ASC(?value)
      `);

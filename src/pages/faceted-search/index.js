@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Link, useHistory, useLocation } from "react-router-dom";
 import styled from "styled-components";  
-import { Header, Button, Icon, Dropdown, List, Placeholder, Loader, Label, Input, Card, Image, Form, Checkbox } from "semantic-ui-react";
+import { Header, Button, Icon, Dropdown, List, Placeholder, Loader, Label, Input, Card, Menu, Image, Form, Checkbox } from "semantic-ui-react";
 import { FillBox, ScrollingFillBox } from "components/ui/Box";
 
 import LayoutWidth from "components/layout-width";
-import { getTaxaWithFacets } from "actions/floracommons/taxa-facets";
+import { taxaFacetsQuery } from "actions/floracommons/taxa-facets";
 import FacetRow from "./facet-row";
 import ValueDropdownFacet from "./facet-creators/value-dropdown";
 
@@ -25,8 +25,8 @@ import {ranks} from "constants/taxonomy";
  * Special Status: value
  */
 
-const Container = styled(FillBox)`
-  flex-direction: column;
+const Container = styled.div`
+  flex: 1;
   padding-top: 20px;
 
   display: grid;
@@ -60,10 +60,13 @@ const SimpleFacets = styled.div`
   background: white;
 `;
 
-const TaxaResultsContainer = styled.div`
+const ResultsArea = styled.div`
   flex: 1;
   padding: 20px;
   background: #fff;
+`;
+
+const TaxaResultsContainer = styled(ResultsArea)`
 `;
 const TaxaResults = styled(List)`
 
@@ -84,8 +87,8 @@ const TaxaPlaceholder = styled(({className, children, ...props}) => (
 ))`
 `;
 
-const ErrorContainer = styled.div``;
-
+const ErrorContainer = styled(ResultsArea)``;
+const Empty = styled(ResultsArea)``;
 
 // const AddFacetButton = styled(Button)``;
 
@@ -161,10 +164,20 @@ const CacheBreakerPref = ({onChange, checked}) => {
   </Form.Field>)
 }
 
+const QueryPrintout = styled.pre`
+  border: 1px solid grey;
+`;
+
+const SparlqlLink = styled.div`
+  display: flex;
+  justify-content: flex-end;
+`;
+
 
 const allStructures = [];
 const allCharacters = [];
 let structureCharacters = {};
+const resultsPerPage = 60;
 
 export default function FacetedSearch({actions}) {
   const {
@@ -175,13 +188,6 @@ export default function FacetedSearch({actions}) {
   const history = useHistory();
   const location = useLocation();
 
-  // async function doIt () {
-  //   await getPlantStructurePropertiesMatching('leaf')
-  //   await getTopLevelPlantStructureProperties()
-  //   await getAllSubpropertiesOf('P248')
-  //   await getAllSubpropertyValuesOf('P248')
-  // } 
-  // doIt();
   const [isInitialised, setInitialised] = useState(false);
   const [isFetchingTaxa, setFetchingTaxa] = useState(false);
   const [isError, setError] = useState(false);
@@ -205,6 +211,11 @@ export default function FacetedSearch({actions}) {
   const [selectedDistributionValues, setSelectedDistributionValues] = useState([]);
 
   const [queryOptions, setQueryOptions] = useState({breakCache: false});
+  const [sparlqlQuery, setSparqlQuery] = useState('');
+
+  const [resultsPage, setResultsPage] = useState(0);
+
+  const hasFacets = Object.values(facets).reduce((sum, fac) => sum + fac.length, 0) > 0 || morphFacetRows.reduce((sum, fac) => fac[0] && fac[1] && fac[2].length ? sum + 1 : sum, 0) > 0;
 
 
   // load structure list on component mount, don't re-run for renders
@@ -260,16 +271,24 @@ export default function FacetedSearch({actions}) {
   }, []);
 
   const doSearch = async (newMorphFacetRows, newFacets) => {
-    setFetchingTaxa(true);
-    setFetchingTaxaImages(true);
+
     if (!newMorphFacetRows) {
       newMorphFacetRows = morphFacetRows;
     }
     if (!newFacets) {
       newFacets = facets;
     }
+    if (!Object.values(newFacets).reduce((sum, fac) => sum + fac.length, 0) && !newMorphFacetRows.length) {
+      setTaxaResults([]);
+      setSparqlQuery('');
+      return;
+    }
+    setFetchingTaxa(true);
+    setFetchingTaxaImages(true);
     try {
-      const taxa = await getTaxaWithFacets(newMorphFacetRows, newFacets, queryOptions);
+      const facetsQuery = taxaFacetsQuery(newMorphFacetRows, newFacets, resultsPage, resultsPerPage);
+      const taxa = await facetsQuery.fetch(queryOptions);
+      setSparqlQuery(facetsQuery.sparql);
       console.log(taxa);
       setTaxaResults(taxa);
       if (taxa.length) {
@@ -290,18 +309,18 @@ export default function FacetedSearch({actions}) {
   }
 
   // handler for the onChange event of a FacetRow
-  const handleFacetRowChange = (facetIndex, [structure, character, values]) => {
+  const handleMorphFacetRowChange = (facetIndex, [structure, character, values]) => {
     // copy factetRows and update with the new facet info
     const newFacetRows = [...morphFacetRows];
     newFacetRows[facetIndex] = [structure, character, values];
     setMorphFacetRows(newFacetRows);
     // persistFacetsToURL(newFacetRows);
     // run the search with the updated facet rows
-    doSearch(newFacetRows); 
+    doSearch(newFacetRows);
   }
 
   // handler for the onRemove event of a FacetRow
-  const handleFacetRowRemove = (facetIndex) => {
+  const handleMorphFacetRowRemove = (facetIndex) => {
     // copy morphFacetRows and update to remove the facet at index `facetIndex`
     const newFacetRows = [...morphFacetRows];
     newFacetRows.splice(facetIndex, 1);
@@ -317,11 +336,11 @@ export default function FacetedSearch({actions}) {
     // }
   }
 
-  const handleAddFacetClick = () => {
+  const handleAddMorphFacetClick = () => {
     setMorphFacetRows([...morphFacetRows, [undefined, undefined, []]]);
   }
 
-  const updateFacets = (updatedFacets) => {
+  const updateSimpleFacets = (updatedFacets) => {
     const newFacets = {...facets, ...updatedFacets};
     setFacets(newFacets)
     doSearch(null, newFacets);
@@ -329,17 +348,17 @@ export default function FacetedSearch({actions}) {
   }
 
   const handleRankChange = (values) => {
-    updateFacets({rank: values})
+    updateSimpleFacets({rank: values})
     setSelectedRankValues(values);
   }
 
   const handleFamilyChange = (values) => {
-    updateFacets({family: values})
+    updateSimpleFacets({family: values})
     setSelectedFamilyValues(values);
   }
 
   const handleDistributionChange = (values) => {
-    updateFacets({distribution: values})
+    updateSimpleFacets({distribution: values})
     setSelectedDistributionValues(values);
   }
 
@@ -382,38 +401,44 @@ export default function FacetedSearch({actions}) {
 
 
   return (
-    <LayoutWidth><Container>
-      <SimpleFacets>
-        <FamilyFacet onChange={handleFamilyChange} selectedValues={selectedFamilyValues} values={familyValues} loading={!isInitialised} />
-        <TaxonRankFacet onChange={handleRankChange} selectedValues={selectedRankValues} loading={!isInitialised} />
-        <DistributionFacet onChange={handleDistributionChange} selectedValues={selectedDistributionValues} values={distributionValues} loading={!isInitialised} />
-        <hr />
-        <CacheBreakerPref onChange={handleCacheBreakerChange} />
-      </SimpleFacets>
-      <FacetBuilder>
-        <Header as="h3">Morphology</Header>
-        {morphFacetRows.map((facet, i) => (
-          <FacetRow
-          key={i}
-          actions={actions}
-          allStructures={allStructures}
-          allCharacters={allCharacters}
-          structureCharacters={structureCharacters}
-          loading={!isInitialised}
-          structure={facet[0]}
-          character={facet[1]}
-          values={facet[2]}
-          onChange={(facetRowValues) => handleFacetRowChange(i, facetRowValues)}
-          onRemove={() => handleFacetRowRemove(i)}
-          />
-        ))}
-        <AddFacetButton onClick={handleAddFacetClick} />
-      </FacetBuilder>
-      {isError
-        ? <ErrorContainer>Oops! Something went wrong.</ErrorContainer>
-        : <Results {...{isFetchingTaxa, taxaResults, isFetchingTaxaImages, taxaImages}} />
-      }
-    </Container></LayoutWidth>
+    <LayoutWidth>
+      <Container>
+        <SimpleFacets>
+          <FamilyFacet onChange={handleFamilyChange} selectedValues={selectedFamilyValues} values={familyValues} loading={!isInitialised} />
+          <TaxonRankFacet onChange={handleRankChange} selectedValues={selectedRankValues} loading={!isInitialised} />
+          <DistributionFacet onChange={handleDistributionChange} selectedValues={selectedDistributionValues} values={distributionValues} loading={!isInitialised} />
+          <hr />
+          <CacheBreakerPref onChange={handleCacheBreakerChange} />
+        </SimpleFacets>
+        <FacetBuilder>
+          <Header as="h3">Morphology</Header>
+          {morphFacetRows.map((facet, i) => (
+            <FacetRow
+            key={i}
+            actions={actions}
+            allStructures={allStructures}
+            allCharacters={allCharacters}
+            structureCharacters={structureCharacters}
+            loading={!isInitialised}
+            structure={facet[0]}
+            character={facet[1]}
+            values={facet[2]}
+            onChange={(facetRowValues) => handleMorphFacetRowChange(i, facetRowValues)}
+            onRemove={() => handleMorphFacetRowRemove(i)}
+            />
+          ))}
+          <AddFacetButton onClick={handleAddMorphFacetClick} />
+          {sparlqlQuery && <SparlqlLink><a href={`//query.dev.floracommons.org/${encodeURI(sparlqlQuery)}`} rel="noreferrer" target="_blank"><Icon name='globe' />Open Sparql Query</a></SparlqlLink>}
+
+        </FacetBuilder>
+        {isError
+          ? <ErrorContainer>Oops! Something went wrong.</ErrorContainer>
+          : hasFacets 
+            ? <Results {...{isFetchingTaxa, taxaResults, isFetchingTaxaImages, taxaImages, resultsPage}} />
+            : <Empty>Add some search facets to show results.</Empty>
+        }
+      </Container>
+    </LayoutWidth>
   );
 }
 
@@ -422,7 +447,7 @@ function Results (props) {
     isFetchingTaxa,
     taxaResults,
     isFetchingTaxaImages,
-    taxaImages
+    taxaImages,
   } = props;
   return (
   <ResultsContainer>
@@ -455,6 +480,8 @@ function Results (props) {
             </Card>
         )) }
         </Card.Group>
+      {taxaResults.length === resultsPerPage ? <div>There may be more results available for this query, but this interface is currently limited to show the first {resultsPerPage} results.</div> : null}
+        {/* {taxaResults.length === resultsPerPage ? <Button onClick={loadNextPage}>Load More Results...</Button> : null} */}
         </TaxaResults>
       : ''}
     </TaxaResultsContainer>

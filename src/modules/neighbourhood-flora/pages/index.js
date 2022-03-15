@@ -84,7 +84,6 @@ export default function NeighbourhoodFlora(props) {
   const [lat, lng] = location ? location : [0,0];
 
   const {
-    // getTaxaWithFacets,
     getWikiDataImagesForTaxa
   } = actions;
 

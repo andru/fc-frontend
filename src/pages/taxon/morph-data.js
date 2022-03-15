@@ -2,6 +2,7 @@ import { getPID, getUID } from 'actions/floracommons/pid-uid';
 import React from 'react';
 import styled from 'styled-components';
 import { Tab, Menu } from 'semantic-ui-react'
+import fetchEntityLabel from "actions/wikibase/fetch-entity-label"
 
 import {getClaimProvenances} from "actions/floracommons/provenance";
 import EntityLabel from 'components/wikibase-entity-label';
@@ -72,7 +73,7 @@ function MorphDataPane (props) {
     return groups;
   }, {});
   
-  return (<Tab.Pane attached='top'>{Object.entries(structureGroups).map(([structure, structureClaims]) => (
+  return (<Tab.Pane attached='top'>{Object.entries(structureGroups).sort((a, b) => a[0] > b[0] ? -1 : b[0] > a[0] ? 1 : 0).map(([structure, structureClaims]) => (
     <StructureGroup key={structure}>
       <StructureHeader><EntityLabel id={structure} /></StructureHeader>
       <StructureClaims>

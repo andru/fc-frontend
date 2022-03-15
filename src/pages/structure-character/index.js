@@ -4,6 +4,8 @@ import styled from "styled-components";
 import { Button, Icon, Dropdown, List, Placeholder, Loader, Label, Input, Card, Image } from "semantic-ui-react";
 import { FillBox, ScrollingFillBox } from "components/ui/Box";
 
+import { taxaFacetsQuery } from "actions/floracommons/taxa-facets";
+
 import FacetRow from "./facet-row";
 
 const Container = styled(FillBox)`
@@ -132,7 +134,6 @@ let structureCharacters = {};
 
 function StructureCharacterSearch({actions}) {
   const {
-    getTaxaWithFacets,
     getWikiDataImagesForTaxa
   } = actions;
 
@@ -203,7 +204,7 @@ function StructureCharacterSearch({actions}) {
       searchFacetRows = facetRows;
     }
     try {
-      const taxa = await getTaxaWithFacets(searchFacetRows);
+      const taxa = await taxaFacetsQuery(searchFacetRows).fetch();
       console.log(taxa);
       setTaxaResults(taxa);
       if (taxa.length) {

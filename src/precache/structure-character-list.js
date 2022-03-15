@@ -63,6 +63,7 @@ export default async function fetchAndCache () {
   
   async function fetchStructureCharacters () {
 
+    // fetch a list of top level structures and associated top-level characters
     const url = wbApi.sparqlQuery(`# 
     SELECT DISTINCT ?structure ?structureLabel ?character ?characterLabel WHERE {
       ?structure wdt:${getPID('core/instance of')} "plant structure".

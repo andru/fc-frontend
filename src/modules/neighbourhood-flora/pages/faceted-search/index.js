@@ -5,7 +5,7 @@ import { Header, Button, Icon, Dropdown, List, Placeholder, Loader, Label, Input
 import { FillBox, ScrollingFillBox } from "components/ui/Box";
 
 import LayoutWidth from "components/layout-width";
-import { getTaxaWithFacets } from "actions/floracommons/taxa-facets";
+import { taxaFacetsQuery } from "actions/floracommons/taxa-facets";
 import FacetRow from "./facet-row";
 import ValueDropdownFacet from "./facet-creators/value-dropdown";
 
@@ -273,7 +273,7 @@ export default function FacetedSearch({actions, ...props}) {
       newFacets = facets;
     }
     try {
-      const taxa = await getTaxaWithFacets(newMorphFacetRows, newFacets, queryOptions);
+      const taxa = await taxaFacetsQuery(newMorphFacetRows, newFacets).fetch(queryOptions);
       console.log(taxa);
       setTaxaResults(taxa);
       if (taxa.length) {
